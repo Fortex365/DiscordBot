@@ -29,6 +29,32 @@ async def clear(ctx, amount = 1):
     await ctx.channel.purge(limit=amount+1)
 
 
+@commands.command()
+async def _dmall(ctx, msg):
+    """Sends DMs to all members of all servers the bot is on.
+    Bot owner only. Since its bannable for scam exploiting.
+    
+    Args:
+    ctx: Current context of the message that invoked the command.
+    """
+    await ctx.message.delete()
+    if str(ctx.message.author.id) == "320281775249162240":
+        pass    
+        
+        
+@commands.command()
+async def _invoker_id(ctx):
+    """Sends the id discord reprezentation of message author into his DMs.
+    
+    Args:
+    ctx: Current context of the message that invoked the command.
+    """
+    await ctx.message.delete()
+    id = ctx.message.author.id
+    print(ctx.message.author)
+    await ctx.message.author.send(id)
+        
+        
 def setup(client_bot):
     """Setup function which allows this module to be an extension loaded into the main file.
 
@@ -40,3 +66,5 @@ def setup(client_bot):
     
     client_bot.add_command(ping)
     client_bot.add_command(clear)
+    client_bot.add_command(_invoker_id)
+    client_bot.add_command(_dmall)

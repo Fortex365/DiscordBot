@@ -2,7 +2,11 @@ import os
 import discord
 from discord.ext import commands
 
-client = commands.Bot(command_prefix= "..")
+
+intents = discord.Intents.default()
+intents.members = True
+client = commands.Bot(command_prefix= "..",
+                      intents=intents)
 
 
 def install_extensions(client):
