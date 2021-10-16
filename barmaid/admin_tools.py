@@ -5,8 +5,7 @@ from discord.ext import commands
 client = None
 
 
-@commands.command(description="Latency between the bot and discord servers.",
-                  aliases=["pong","ping!","pong!","latency"])
+@commands.command(aliases=["pong","ping!","pong!","latency"])
 async def ping(ctx):
     """Outputs the ping between the client and the sever.
 
@@ -19,8 +18,7 @@ async def ping(ctx):
                      tts=True, delete_after=10)
 
 
-@commands.command(description="Deletes the given number of messages in the channel where was invoked",
-                  aliases=["clr","delmsgs","delmsg"])
+@commands.command(aliases=["clr","delmsgs","delmsg"])
 async def clear(ctx, amount = 1):
     """Clears the number of messages in the channel where it was invoked.
 
