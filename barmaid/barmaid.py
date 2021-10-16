@@ -12,18 +12,12 @@ def install_extensions(client):
         client: The bot instance itself.
     """
     client.load_extension("admin_tools")    
-
-
-@client.event
-async def on_server_join(ctx):
-    for channel in client.get_all_channels():
-        if channel.name == 'general':
-            await channel.send(
-                f"Thanks for adding this bot to your server. Barmaid at your service!")
             
             
 @client.event
 async def on_ready():
+    """Method which sets some defaults when the client finally boots up.
+    """
     await client.change_presence(
         status=discord.Status.idle,
         activity=discord.Game(name="Your local e-Barmaid"))

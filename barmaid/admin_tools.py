@@ -6,8 +6,7 @@ client = None
 
 
 @commands.command(description="Latency between the bot and discord servers.",
-                  aliases=["pong","ping!","pong!","latency"],
-                  help="Invoke as: <bot_prefix>ping")
+                  aliases=["pong","ping!","pong!","latency"])
 async def ping(ctx):
     """Outputs the ping between the client and the sever.
 
@@ -21,8 +20,7 @@ async def ping(ctx):
 
 
 @commands.command(description="Deletes the given number of messages in the channel where was invoked",
-                  aliases=["clr","delmsgs","delmsg"],
-                  help="Invoke as <bot_prefix>clear 5")
+                  aliases=["clr","delmsgs","delmsg"])
 async def clear(ctx, amount = 1):
     """Clears the number of messages in the channel where it was invoked.
 
@@ -34,6 +32,11 @@ async def clear(ctx, amount = 1):
 
 
 def setup(client_bot):
+    """Setup function which allows this module to be an extension loaded into the main file.
+
+    Args:
+        client_bot: The bot instance itself, passed in from barmaid.load_extention("admin_tools").
+    """
     global client
     client = client_bot
     
