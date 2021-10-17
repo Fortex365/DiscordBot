@@ -16,11 +16,13 @@ def install_extensions(client):
         client: The bot instance itself.
     """
     client.load_extension("admin_tools")    
+    client.load_extension("minigames")    
             
             
 @client.event
 async def on_ready():
-    """Method which sets some defaults when the client finally boots up.
+    """Method which sets some inicialization when
+    the client finally boots up.
     """
     await client.change_presence(
         status=discord.Status.idle,

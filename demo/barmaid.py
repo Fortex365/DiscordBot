@@ -130,9 +130,9 @@ async def deathroll(ctx, num):
   num_int = int(num)
   res = random.randint(1,num_int)
   if res > 1:
-    await ctx.send(f'<@{ctx.message.author.id}> deathrolled {str(res)}. Range[1-{num}]')
+    await ctx.send(f'{ctx.message.author.mention} deathrolled {str(res)}. Range[1 - {num:,}]')
   else:
-    await ctx.send(f'<@{ctx.message.author.id}> deathrolled {str(res)} and LOST! Range[1-{num}]')
+    await ctx.send(f'{ctx.message.author.mention} deathrolled {str(res)} and LOST! Range[1 - {num:,}]')
 
 
 
