@@ -9,6 +9,11 @@ client = commands.Bot(command_prefix= "..",
                       intents=intents)
 
 
+def get_client():
+    global client
+    return client
+
+
 def install_extensions(client):
     """Install all the extentions in the other files to the client.
 
