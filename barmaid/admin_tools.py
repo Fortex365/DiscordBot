@@ -1,4 +1,5 @@
 import discord
+from discord.errors import Forbidden, HTTPException
 from discord.ext import commands
 import asyncio
 from utils import create_embed
@@ -8,12 +9,13 @@ client = None
 
 DELETE_HOUR = 3600
 DELETE_REGULAR_MESSAGE = 15
-DELETE_EMBED = 300
+DELETE_EMBED_REGULAR = 300
+DELETE_SYSTEM_EMBED = 3600
 
 
 @commands.command(aliases=["pong","ping!","pong!","latency"])
 async def ping(ctx):
-    """Outputs the ping between the client and the sever.
+    """Outputs the ping between the client and the server.
 
     Args:
         ctx: Current context of the message that invoked the command.
@@ -57,7 +59,7 @@ async def _dmall(ctx, msg):
 @commands.command()
 @commands.has_permissions(administrator=True)
 async def _invoker_id(ctx):
-    """Sends the id discord reprezentation of message author into his DMs.
+    """Sends the id discord representation of message author into his DMs.
     
     Args:
     ctx: Current context of the message that invoked the command.
@@ -72,7 +74,8 @@ async def _invoker_id(ctx):
 @commands.command()
 @commands.has_permissions(kick_members = True)
 @commands.bot_has_permissions(administrator = True)
-async def kick(ctx, user: discord.Member, *, reason="No reason provided"):
+async def kick(ctx, user: discord.Member, *,
+               reason="No reason provided"):
     """Kicks the user from the server deducted from the context.
 
     Args:
@@ -83,26 +86,72 @@ async def kick(ctx, user: discord.Member, *, reason="No reason provided"):
     await ctx.message.delete()
     await user.kick(reason=reason)    
     
-    kick = create_embed(f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author.mention}")
-    await ctx.channel.send(embed=kick, delete_after=DELETE_EMBED)
+    kick = create_embed(
+        f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author.mention}")
+    await ctx.channel.send(embed=kick, delete_after=DELETE_SYSTEM_EMBED)
     
-    kick = create_embed(f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
+    kick = create_embed(
+        f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
     await user.send(embed=kick)
 
 
 @kick.error
-async def kick_error(ctx):
+async def kick_error(ctx, error):
     """Informs server owner deducted from context about who tried
     to perform an kick operation without permissions.
 
     Args:
         ctx (discord.Context): Context of the invoked command.
     """
-    owner = ctx.guild.owner
-    direct_message = await owner.create_dm()
+    if isinstance(error, Forbidden):
+        owner = ctx.guild.owner
+        direct_message = await owner.create_dm()
+        
+        await direct_message.send(
+            f"Missing permissions (kick): {ctx.message.author}")
+        
     
-    await direct_message.send(f"Missing Permissions: {ctx.message.author}")
+@commands.guild_only()
+@commands.command()
+@commands.has_permissions(ban_members = True)
+@commands.bot_has_permissions(administrator = True)
+async def ban(ctx, user: discord.Member, *, 
+              reason="No reason provided",
+              delete_message_days=1):
+    """Bans the user from the server deducted from the context.
+
+    Args:
+        ctx (discord.Context): Context of the invoked command.
+        user (discord.Member): Tagged discord member
+        reason (str, optional): Reason why user was kicked from server. Defaults to "No reason provided".
+    """
+    await ctx.message.delete()
+    await user.ban(reason=reason, delete_message_days=delete_message_days)    
     
+    kick = create_embed(
+        f"Banned {str(user)}!", f"Reason: {reason}\nBy: {ctx.author.mention}")
+    await ctx.channel.send(embed=kick, delete_after=DELETE_SYSTEM_EMBED)
+    
+    kick = create_embed(
+        f"Banned {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
+    await user.send(embed=kick)
+
+
+@ban.error
+async def ban_error(ctx, error):
+    """Informs server owner deducted from context about who tried
+    to perform an ban operation without permissions.
+
+    Args:
+        ctx (discord.Context): Context of the invoked command.
+    """
+    if isinstance(error, Forbidden):
+        owner = ctx.guild.owner
+        direct_message = await owner.create_dm()
+        
+        await direct_message.send(
+            f"Missing permissions (ban): {ctx.message.author}")
+
      
 @commands.command()
 async def _echo(ctx, *, message: str = None):
@@ -113,11 +162,11 @@ async def _echo(ctx, *, message: str = None):
         message (str): Message to be repeated.
     """
     if message == None:
-        await ctx.send("Empty args!", delete_after=30)
+        await ctx.send("Empty args!", delete_after=DELETE_REGULAR_MESSAGE)
         await asyncio.sleep(30)
         await ctx.message.delete()
         return
-    await ctx.send(message, delete_after=30)
+    await ctx.send(message, delete_after=DELETE_REGULAR_MESSAGE)
            
         
 def setup(client_bot):
@@ -134,6 +183,7 @@ def setup(client_bot):
     client_bot.add_command(ping)
     client_bot.add_command(clear)
     client_bot.add_command(kick)
+    client_bot.add_command(ban)
     
     client_bot.add_command(_invoker_id)
     client_bot.add_command(_dmall)

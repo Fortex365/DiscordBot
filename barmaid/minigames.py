@@ -7,7 +7,8 @@ client = None
 
 DELETE_HOUR = 3600
 DELETE_REGULAR_MESSAGE = 15
-DELETE_EMBED = 300
+DELETE_EMBED_REGULAR = 300
+DELETE_SYSTEM_EMBED = 3600
  
        
 @commands.guild_only()        
@@ -41,7 +42,7 @@ async def rules(ctx):
     """Subcommand for deathroll, informs the caller about the game rules."""
     rules_ = """Two players sets a bet typically for money. They use that amount of money and multiply it by 10, 100 or 1000 to make the starting rolling number higher so the game doesn't end too quick. Any player can decide to start and rolls that result number from multiplication. The randomly rolled number must the other player use as the new rolling upperbounds. First player whom reaches number 1 loses."""
     embed = create_embed("Deathroll rules:", rules_)
-    await ctx.send(embed=embed, delete_after=DELETE_EMBED)
+    await ctx.send(embed=embed, delete_after=DELETE_EMBED_REGULAR)
 
     
 @commands.guild_only()
@@ -53,7 +54,7 @@ async def git(ctx):
         ctx (discord.Context): Context of invoked command.
     """
     if ctx.invoked_subcommand is None:
-        await ctx.send("Invalid git command passed...")
+        await ctx.send("Invalid git command passed.")
 
 
 @git.command()
@@ -67,7 +68,7 @@ async def push(ctx, remote:str=None, branch:str=None):
         branch (str, optional): Branch to perform push on. Defaults to None.
     """
     if not remote or not branch:
-        await ctx.send("Invalid push arguments passed...")
+        await ctx.send("Invalid push arguments passed.")
     else:
         await ctx.send(f"Pushing to {remote} {branch}")
     

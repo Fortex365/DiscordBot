@@ -9,8 +9,17 @@ client = commands.Bot(command_prefix= "..",
                       intents=intents)
 
 
+@client.event
+async def on_ready():
+    """Method which sets some inicialization when
+    the client finally boots up.
+    """
+    await client.change_presence(
+        status=discord.Status.idle,
+        activity=discord.Game(name="Your local e-Barmaid"))
+
+
 def get_client():
-    global client
     return client
 
 
@@ -24,16 +33,10 @@ def install_extensions(client):
     client.load_extension("minigames")    
             
             
-@client.event
-async def on_ready():
-    """Method which sets some inicialization when
-    the client finally boots up.
-    """
-    await client.change_presence(
-        status=discord.Status.idle,
-        activity=discord.Game(name="Your local e-Barmaid"))
-    
-    
-CONNECTION_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
-install_extensions(client)
-client.run(CONNECTION_TOKEN)
+def run(client):   
+    CONNECTION_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
+    install_extensions(client)
+    client.run(CONNECTION_TOKEN)
+
+if __name__ == "__main__":
+    run(client)
