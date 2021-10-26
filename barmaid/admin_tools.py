@@ -163,10 +163,12 @@ async def _echo(ctx, *, message: str = None):
     """
     if message == None:
         await ctx.send("Empty args!", delete_after=DELETE_REGULAR_MESSAGE)
-        await asyncio.sleep(30)
+        await asyncio.sleep(DELETE_REGULAR_MESSAGE)
         await ctx.message.delete()
         return
     await ctx.send(message, delete_after=DELETE_REGULAR_MESSAGE)
+    await asyncio.sleep(DELETE_REGULAR_MESSAGE)
+    await ctx.message.delete()
            
         
 def setup(client_bot):
