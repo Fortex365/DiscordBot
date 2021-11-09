@@ -103,13 +103,13 @@ async def kick_error(ctx, error):
     Args:
         ctx (discord.Context): Context of the invoked command.
     """
-    if isinstance(error, Forbidden):
-        owner = ctx.guild.owner
-        direct_message = await owner.create_dm()
-        
-        await direct_message.send(
-            f"Missing permissions (kick): {ctx.message.author}")
-        
+    #if isinstance(error, Forbidden):
+    owner = ctx.guild.owner
+    direct_message = await owner.create_dm()
+    
+    await direct_message.send(
+        f"Missing permissions (kick): {ctx.message.author}")
+    
     
 @commands.guild_only()
 @commands.command()
