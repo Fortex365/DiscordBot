@@ -1,20 +1,15 @@
-import discord
-from discord.errors import Forbidden, HTTPException
-from discord.ext import commands
 import asyncio
-from utils import create_embed
-
+import discord
+from discord.ext import commands, tasks
+from utilities import BarmaidSettings, create_embed
+from utilities import BarmaidSettings as BS
 
 client = None
-
-DELETE_HOUR = 3600
-DELETE_REGULAR_MESSAGE = 15
-DELETE_EMBED_REGULAR = 300
-DELETE_SYSTEM_EMBED = 3600
-
+MICROSECONDS_TO_MILISECONDS = 1000
 
 @commands.command(aliases=["pong","ping!","pong!","latency"])
-async def ping(ctx):
+@commands.guild_only()
+async def ping(ctx:commands.Context):
     """Outputs the ping between the client and the server.
 
     Args:
@@ -22,13 +17,14 @@ async def ping(ctx):
     """
     if ctx.message.guild: 
       await ctx.message.delete()
-      await ctx.send(f"Pong! Latency: {round(client.latency*1000)} miliseconds.",
-                     tts=True, delete_after=DELETE_REGULAR_MESSAGE)
+      await ctx.send(
+          f"Pong! Latency: {round(client.latency*MICROSECONDS_TO_MILISECONDS)} miliseconds.",
+          tts=True, delete_after=BS.DELETE_ORDINARY_MESSAGE)
 
 
-@commands.guild_only()
 @commands.command(aliases=["clr","delmsgs","delmsg"])
-async def clear(ctx, amount = 1):
+@commands.guild_only()
+async def clear(ctx:commands.Context, amount:int = 1):
     """Clears the number of messages in the channel where it was invoked.
 
     Args:
@@ -37,58 +33,82 @@ async def clear(ctx, amount = 1):
         amount (int, optional): Number of messages to be deleted to,
         excluding the invoked command itself. Defaults to 1.
     """
-    await ctx.channel.purge(limit=amount+1)
-
-
-@commands.guild_only()
+    if amount > 0:
+        await ctx.channel.purge(limit=amount+1)
+    else:
+        await ctx.send(f"Error! Amount of messages to be deleted has to be positive number.", 
+                       delete_after=BS.DELETE_COMMAND_ERROR)
+               
 @commands.command()
 @commands.has_permissions(administrator=True)
-async def _dmall(ctx, msg):
-    """Sends DMs to all members of all servers the bot is on.
-    Bot owner only. Since its bannable for scam exploiting.
-    
-    Args:
-    ctx: Current context of the message that invoked the command.
-    """
-    await ctx.message.delete()
-    if str(ctx.message.author.id) == "320281775249162240":
-        await ctx.message.author.send("Not yet implemented command!")    
-
-        
-@commands.guild_only()        
-@commands.command()
-@commands.has_permissions(administrator=True)
-async def _invoker_id(ctx):
+async def invoker_id(ctx:commands.Context):
     """Sends the id discord representation of message author into his DMs.
     
     Args:
     ctx: Current context of the message that invoked the command.
     """
-    await ctx.message.delete()
     id = ctx.message.author.id
-    print(ctx.message.author)
+    if ctx.message.guild:
+        await ctx.message.delete()
     await ctx.message.author.send(id)
 
+def update_client_prefix(client:commands.Bot, new_prefix:str):
+    """Changes the prefix the client listens to.
+    Function used in prefix subcommand set.
 
-@commands.guild_only()
+    Args:
+        new_prefix (str): New prefix to set to.
+    """
+    client_old = client
+    client_new = client_old
+    client_new.command_prefix = new_prefix
+    return client_new
+
+@commands.group(invoke_without_subcommand=True)
+#@commands.has_permissions(administrator=True)
+async def prefix(ctx:commands.Context):
+    prefix = BS.CLIENT_PREFIX
+    if ctx.invoked_subcommand:
+        return
+    await ctx.send(f"Current bot prefix is set to `{prefix}` symbol.", 
+                   delete_after=BS.DELETE_ORDINARY_MESSAGE)
+    await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+
+# SET PREFIX HAS TO BE COMMAND ON ITS OWN CUZ YOU CANNOT CHECK PERMISSIONS ON SUBCOMMANDS (PREFIX FOR EVERYONE, SET PREFIX FOR ADMINS ONLY) 
+@prefix.command()
+async def set(ctx:commands.Context, new_prefix:str=None):
+    global client
+    if not new_prefix:
+        await ctx.send(f"Error! Prefix cannot be empty.", 
+                       delete_after=BS.DELETE_ORDINARY_MESSAGE)
+        await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+        return
+    client = update_client_prefix(client, new_prefix)
+    BS.CLIENT_PREFIX = new_prefix
+    await ctx.send(f"Prefix was set to `{new_prefix}` succesfully.", 
+                   delete_after=BS.DELETE_ORDINARY_MESSAGE)
+    await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+      
 @commands.command()
+@commands.guild_only()
 @commands.has_permissions(kick_members = True)
 @commands.bot_has_permissions(administrator = True)
-async def kick(ctx, user: discord.Member, *,
+async def kick(ctx:commands.Context, user: discord.Member, *,
                reason="No reason provided"):
     """Kicks the user from the server deducted from the context.
 
     Args:
         ctx (discord.Context): Context of the invoked command.
         user (discord.Member): Tagged discord member
-        reason (str, optional): Reason why user was kicked from server. Defaults to "No reason provided".
+        reason (str, optional): Reason why user was kicked from server.
+        Defaults to "No reason provided".
     """
     await ctx.message.delete()
     await user.kick(reason=reason)    
     
     kick = create_embed(
         f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author.mention}")
-    await ctx.channel.send(embed=kick, delete_after=DELETE_SYSTEM_EMBED)
+    await ctx.channel.send(embed=kick, delete_after=BS.DELETE_EMBED_SYSTEM)
     
     kick = create_embed(
         f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
@@ -96,41 +116,42 @@ async def kick(ctx, user: discord.Member, *,
 
 
 @kick.error
-async def kick_error(ctx, error):
+async def kick_error(error:discord.errors, ctx:commands.Context):
     """Informs server owner deducted from context about who tried
     to perform an kick operation without permissions.
 
     Args:
-        ctx (discord.Context): Context of the invoked command.
+        error (discord.errors): Error raised.
+        ctx (commands.Context): Context of the invoked command.
     """
-    #if isinstance(error, Forbidden):
-    owner = ctx.guild.owner
-    direct_message = await owner.create_dm()
+    if isinstance(error, commands.MissingPermissions):
+        owner = ctx.guild.owner
+        direct_message = await owner.create_dm()
     
-    await direct_message.send(
-        f"Missing permissions (kick): {ctx.message.author}")
+        await direct_message.send(
+            f"Missing permissions (kick_members): {ctx.message.author}")
     
     
-@commands.guild_only()
 @commands.command()
+@commands.guild_only()
 @commands.has_permissions(ban_members = True)
 @commands.bot_has_permissions(administrator = True)
-async def ban(ctx, user: discord.Member, *, 
-              reason="No reason provided",
-              delete_message_days=1):
+async def ban(ctx:commands.Context, user: discord.Member, *,
+              reason: str ="No reason provided", del_msg_in_days: int = 1):
     """Bans the user from the server deducted from the context.
 
     Args:
         ctx (discord.Context): Context of the invoked command.
         user (discord.Member): Tagged discord member
-        reason (str, optional): Reason why user was kicked from server. Defaults to "No reason provided".
+        reason (str, optional): Reason why user was kicked from server.
+        Defaults to "No reason provided".
     """
     await ctx.message.delete()
-    await user.ban(reason=reason, delete_message_days=delete_message_days)    
+    await user.ban(reason=reason, delete_message_days=del_msg_in_days)    
     
     kick = create_embed(
         f"Banned {str(user)}!", f"Reason: {reason}\nBy: {ctx.author.mention}")
-    await ctx.channel.send(embed=kick, delete_after=DELETE_SYSTEM_EMBED)
+    await ctx.channel.send(embed=kick, delete_after=BS.DELETE_EMBED_SYSTEM)
     
     kick = create_embed(
         f"Banned {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
@@ -138,23 +159,24 @@ async def ban(ctx, user: discord.Member, *,
 
 
 @ban.error
-async def ban_error(ctx, error):
+async def ban_error(error:discord.errors, ctx:commands.Context):
     """Informs server owner deducted from context about who tried
     to perform an ban operation without permissions.
 
     Args:
-        ctx (discord.Context): Context of the invoked command.
+        error (discord.errors): Error raised.
+        ctx (commands.Context): Context of the invoked command.
     """
-    if isinstance(error, Forbidden):
+    if isinstance(error, commands.MissingPermissions):
         owner = ctx.guild.owner
         direct_message = await owner.create_dm()
         
         await direct_message.send(
-            f"Missing permissions (ban): {ctx.message.author}")
+            f"Missing permissions (ban_members): {ctx.message.author}")
 
      
 @commands.command()
-async def _echo(ctx, *, message: str = None):
+async def echo(ctx:commands.Context, *, message: str = None):
     """Echoes the message the command is invoked with.
 
     Args:
@@ -162,16 +184,25 @@ async def _echo(ctx, *, message: str = None):
         message (str): Message to be repeated.
     """
     if message == None:
-        await ctx.send("Empty args!", delete_after=DELETE_REGULAR_MESSAGE)
-        await asyncio.sleep(DELETE_REGULAR_MESSAGE)
-        await ctx.message.delete()
+        await ctx.send(f"Error! Argument {message=}",
+                       delete_after=BS.DELETE_ORDINARY_MESSAGE)
+        await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
         return
-    await ctx.send(message, delete_after=DELETE_REGULAR_MESSAGE)
-    await asyncio.sleep(DELETE_REGULAR_MESSAGE)
+    await ctx.send(message, delete_after=BS.DELETE_ORDINARY_MESSAGE)
+    await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+    
+async def delete_invoke_itself(ctx:commands.Context, time:BarmaidSettings):
+    """Some time after command invocation has passed, the invoker's command message will be deleted.
+
+    Args:
+        ctx (commands.Context): Context to delete the message from.
+        time (utilities.BarmaidSettings): Time to pass before delete happens.
+    """
+    await asyncio.sleep(time+1)
     await ctx.message.delete()
            
         
-def setup(client_bot):
+def setup(client_bot: commands.Bot):
     """Setup function which allows this module to be
     an extension loaded into the main file.
 
@@ -182,11 +213,15 @@ def setup(client_bot):
     global client
     client = client_bot
     
-    client_bot.add_command(ping)
-    client_bot.add_command(clear)
-    client_bot.add_command(kick)
-    client_bot.add_command(ban)
+    client.add_command(ping)
+    client.add_command(clear)
+    client.add_command(invoker_id)
+    client.add_command(prefix)
+    client.add_command(ban) 
+    client.add_command(kick)
+    client.add_command(echo)
     
-    client_bot.add_command(_invoker_id)
-    client_bot.add_command(_dmall)
-    client_bot.add_command(_echo)
+if __name__ == "__main__":
+    """In case of trying to execute this module, nothing should happen.
+    """
+    pass

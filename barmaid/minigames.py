@@ -1,19 +1,15 @@
 import discord
 from discord.ext import commands
 import random
-from utils import create_embed
+from utilities import create_embed
+from utilities import BarmaidSettings as BS
 
 client = None
-
-DELETE_HOUR = 3600
-DELETE_REGULAR_MESSAGE = 15
-DELETE_EMBED_REGULAR = 300
-DELETE_SYSTEM_EMBED = 3600
- 
        
 @commands.guild_only()        
-@commands.group(invoke_without_command=True, aliases=["roll","rolldice","diceroll"])
-async def deathroll(ctx, range=1000):
+@commands.group(invoke_without_command=True,
+                aliases=["roll","rolldice","diceroll"])
+async def deathroll(ctx, range: int = 1000):
     """Outputs a random deathrolled number by given range,
     or tells if you lost.
 
@@ -35,14 +31,24 @@ async def deathroll(ctx, range=1000):
     else:
         await ctx.send(
             f"{ctx.message.author.mention} deathrolled {res:,} and LOST! Range[1 - {range:,}]")
-        
-            
+                    
 @deathroll.command()       
 async def rules(ctx):
-    """Subcommand for deathroll, informs the caller about the game rules."""
-    rules_ = """Two players sets a bet typically for money. They use that amount of money and multiply it by 10, 100 or 1000 to make the starting rolling number higher so the game doesn't end too quick. Any player can decide to start and rolls that result number from multiplication. The randomly rolled number must the other player use as the new rolling upperbounds. First player whom reaches number 1 loses."""
-    embed = create_embed("Deathroll rules:", rules_)
-    await ctx.send(embed=embed, delete_after=DELETE_EMBED_REGULAR)
+    """Subcommand for deathroll, informs the caller about the game rules.
+
+    Args:
+        ctx: Current context of the message that invoked the command.
+    """
+    game_rules = "Two players sets a bet typically for money. " \
+    "They use that amount of money and multiply it by 10, 100 or 1000 to " \
+    "make the starting rolling number higher so the game doesn't end too " \
+    "quick. Any player can decide to start and rolls that result number " \
+    "from multiplication. The randomly rolled number must the other player " \
+    "use as the new rolling upperbound. First player whom reaches number " \
+    "1 loses."
+    embed = create_embed("Deathroll rules:", game_rules)
+    await ctx.send(embed=embed,
+                   delete_after=BS.DELETE_EMBED_ORDINARY)
 
     
 @commands.guild_only()
@@ -73,16 +79,20 @@ async def push(ctx, remote:str=None, branch:str=None):
         await ctx.send(f"Pushing to {remote} {branch}")
     
             
-def setup(client_bot):
+def setup(bot:commands.Bot):
     """Setup function which allows this module to be an extension
     loaded into the main file.
 
     Args:
-        client_bot: The bot instance itself, passed in
+        bot: The bot instance itself, passed in
         from barmaid.load_extention("minihames").
     """
     global client
-    client = client_bot
-    
-    client_bot.add_command(deathroll)
-    client_bot.add_command(git)
+    client = bot
+    client.add_command(deathroll)
+    client.add_command(git)
+
+if __name__ == "__main__":
+    """In case of trying to execute this module, nothing should happen.
+    """
+    pass

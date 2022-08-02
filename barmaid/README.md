@@ -1,5 +1,13 @@
 # Barmaid Bot
 
+Student napíše Bota pro komunikační platformu Discord, v programovacím jazyce Python.
+Student zároveň s tím vyřeší požadavek na hosting Bota pro jej nepřetržitý provoz.
+Bot by měl sloužit k obecným potřebám různorodých komunit využívající tuto platformu, 
+např. Bot bude zprostředkovávat vytváření a plánování eventů pro uživatele komunity a jejich účasti 
+na daném eventu. Dále bude Bot sloužit jako administrátorský nástroj pro administrátora komunity např. 
+hromadné mazání a posílání zpráv, hromadné přesouvání uživatelů, a samotné zprostředkování pravidel pro komunitu.
+V neposlední řadě bude Bot moci streamovat v tzv. Voice Channels hudbou zadanou odkazem např. ze Spotify, Youtube.
+
 The default prefix is `..`
 
 To invoke commands you do such as:
