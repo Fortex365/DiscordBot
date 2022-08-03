@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import random
 from utilities import create_embed
-from utilities import BarmaidSettings as BS
+from utilities import Settings as S
 
 client = None
        
@@ -48,7 +48,7 @@ async def rules(ctx):
     "1 loses."
     embed = create_embed("Deathroll rules:", game_rules)
     await ctx.send(embed=embed,
-                   delete_after=BS.DELETE_EMBED_ORDINARY)
+                   delete_after=S.DELETE_EMBED_ORDINARY)
 
     
 @commands.guild_only()

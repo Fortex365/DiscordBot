@@ -1,8 +1,8 @@
 import asyncio
 import discord
 from discord.ext import commands, tasks
-from utilities import BarmaidSettings, create_embed
-from utilities import BarmaidSettings as BS
+from utilities import Settings as S, create_embed
+from json_db import read_db, update_db
 
 client = None
 MICROSECONDS_TO_MILISECONDS = 1000
@@ -19,7 +19,7 @@ async def ping(ctx:commands.Context):
       await ctx.message.delete()
       await ctx.send(
           f"Pong! Latency: {round(client.latency*MICROSECONDS_TO_MILISECONDS)} miliseconds.",
-          tts=True, delete_after=BS.DELETE_ORDINARY_MESSAGE)
+          tts=True, delete_after=S.DELETE_ORDINARY_MESSAGE)
 
 
 @commands.command(aliases=["clr","delmsgs","delmsg"])
@@ -37,7 +37,7 @@ async def clear(ctx:commands.Context, amount:int = 1):
         await ctx.channel.purge(limit=amount+1)
     else:
         await ctx.send(f"Error! Amount of messages to be deleted has to be positive number.", 
-                       delete_after=BS.DELETE_COMMAND_ERROR)
+                       delete_after=S.DELETE_COMMAND_ERROR)
                
 @commands.command()
 @commands.has_permissions(administrator=True)
@@ -51,6 +51,17 @@ async def invoker_id(ctx:commands.Context):
     if ctx.message.guild:
         await ctx.message.delete()
     await ctx.message.author.send(id)
+    
+@commands.command()
+@commands.has_permissions(administrator=True)
+async def guid(ctx:commands.Context):
+    """Sends the guild id from context to the invoker into DMs.
+
+    Args:
+        ctx (commands.Context): Context deducted from invocation.
+    """
+    guid = ctx.guild.id
+    await ctx.message.author.send(f"{guid=}")
 
 def update_client_prefix(client:commands.Bot, new_prefix:str):
     """Changes the prefix the client listens to.
@@ -67,27 +78,47 @@ def update_client_prefix(client:commands.Bot, new_prefix:str):
 @commands.group(invoke_without_subcommand=True)
 #@commands.has_permissions(administrator=True)
 async def prefix(ctx:commands.Context):
-    prefix = BS.CLIENT_PREFIX
+    prefix = read_db(ctx.guild.id, "prefix")
+    if not prefix:
+        await ctx.send(f"Oops. Something internally went wrong with receiving the data.", 
+                       delete_after=S.DELETE_ORDINARY_MESSAGE)
+    
     if ctx.invoked_subcommand:
         return
     await ctx.send(f"Current bot prefix is set to `{prefix}` symbol.", 
-                   delete_after=BS.DELETE_ORDINARY_MESSAGE)
-    await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+                   delete_after=S.DELETE_ORDINARY_MESSAGE)
+    await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
 
 # SET PREFIX HAS TO BE COMMAND ON ITS OWN CUZ YOU CANNOT CHECK PERMISSIONS ON SUBCOMMANDS (PREFIX FOR EVERYONE, SET PREFIX FOR ADMINS ONLY) 
 @prefix.command()
 async def set(ctx:commands.Context, new_prefix:str=None):
     global client
+    
     if not new_prefix:
         await ctx.send(f"Error! Prefix cannot be empty.", 
-                       delete_after=BS.DELETE_ORDINARY_MESSAGE)
-        await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+                       delete_after=S.DELETE_ORDINARY_MESSAGE)
+        await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
         return
-    client = update_client_prefix(client, new_prefix)
-    BS.CLIENT_PREFIX = new_prefix
+    
+    #client = update_client_prefix(client, new_prefix)
+    
+    #guid = str(ctx.guild.id)
+    #with open("data.json", "r") as f:
+    #    old = json.load(f)
+    #new = old
+    #guild_data = new[guid]
+    #guild_data['prefix'] = new_prefix
+    #new[guid] = guild_data
+    #result = json.dumps(new, indent=2)
+    #with open("data.json", "w") as f:
+    #    f.write(result)
+    if not update_db(ctx.guild.id, 'prefix', new_prefix):
+        await ctx.send(f"Oops. Something internally went wrong with sending the data.",
+                       delete_after=S.DELETE_ORDINARY_MESSAGE)
+        return
     await ctx.send(f"Prefix was set to `{new_prefix}` succesfully.", 
-                   delete_after=BS.DELETE_ORDINARY_MESSAGE)
-    await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+                   delete_after=S.DELETE_ORDINARY_MESSAGE)
+    await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
       
 @commands.command()
 @commands.guild_only()
@@ -108,7 +139,7 @@ async def kick(ctx:commands.Context, user: discord.Member, *,
     
     kick = create_embed(
         f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author.mention}")
-    await ctx.channel.send(embed=kick, delete_after=BS.DELETE_EMBED_SYSTEM)
+    await ctx.channel.send(embed=kick, delete_after=S.DELETE_EMBED_SYSTEM)
     
     kick = create_embed(
         f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
@@ -151,7 +182,7 @@ async def ban(ctx:commands.Context, user: discord.Member, *,
     
     kick = create_embed(
         f"Banned {str(user)}!", f"Reason: {reason}\nBy: {ctx.author.mention}")
-    await ctx.channel.send(embed=kick, delete_after=BS.DELETE_EMBED_SYSTEM)
+    await ctx.channel.send(embed=kick, delete_after=S.DELETE_EMBED_SYSTEM)
     
     kick = create_embed(
         f"Banned {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
@@ -185,13 +216,13 @@ async def echo(ctx:commands.Context, *, message: str = None):
     """
     if message == None:
         await ctx.send(f"Error! Argument {message=}",
-                       delete_after=BS.DELETE_ORDINARY_MESSAGE)
-        await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+                       delete_after=S.DELETE_ORDINARY_MESSAGE)
+        await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
         return
-    await ctx.send(message, delete_after=BS.DELETE_ORDINARY_MESSAGE)
-    await delete_invoke_itself(ctx, BS.DELETE_ORDINARY_MESSAGE)
+    await ctx.send(message, delete_after=S.DELETE_ORDINARY_MESSAGE)
+    await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
     
-async def delete_invoke_itself(ctx:commands.Context, time:BarmaidSettings):
+async def delete_invoke_itself(ctx:commands.Context, time:S):
     """Some time after command invocation has passed, the invoker's command message will be deleted.
 
     Args:
@@ -220,6 +251,7 @@ def setup(client_bot: commands.Bot):
     client.add_command(ban) 
     client.add_command(kick)
     client.add_command(echo)
+    client.add_command(guid)
     
 if __name__ == "__main__":
     """In case of trying to execute this module, nothing should happen.

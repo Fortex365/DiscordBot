@@ -1,0 +1,12 @@
+{
+  "DeleteMessages": {
+    "DELETE_HOUR": 3600,
+    "DELETE_ORDINARY_MESSAGE": 15,
+    "DELETE_COMMAND_ERROR": 15,
+    "DELETE_EMBED_ORDINARY": 300,
+    "DELETE_EMBED_SYSTEM": 3600
+  },
+  "Activity": {
+    "CLIENT_ACTIVITY": "Your local e-Barmaid"
+  }
+}
