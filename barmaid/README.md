@@ -36,6 +36,33 @@ Brief overview what the module does:
 - Sets up client extensions
 - Sets up client itself
 
+# Configuration file `config.json`
+Can look something like this:
+```json
+{
+  "DeleteMessages": {
+    "DELETE_HOUR": 3600,
+    "DELETE_ORDINARY_MESSAGE": 15,
+    "DELETE_COMMAND_ERROR": 15,
+    "DELETE_EMBED_ORDINARY": 300,
+    "DELETE_EMBED_SYSTEM": 3600
+  },
+  "Activity": {
+    "CLIENT_ACTIVITY": "Your local e-Barmaid"
+  }
+}
+```
+You can modify this data to your own liking:
+- "DELETE_ORDINARY_MESSAGE" - Regular message (respond to command) until its deletion. *Number: time in seconds.*
+- "DELETE_COMMAND_ERROR" - Regular error message (respond to command) until its deletion. *Number: time in seconds.*
+- "DELETE_EMBED_ORDINARY" - Important message (respond to command, announce etc.) until its deletion. *Number: time in seconds.*
+- "DELETE_EMBED_SYSTEM" - Important message (from bot) until its deletion. *Number: time in seconds.*
+- "CLIENT_ACTIVITY" - Activity bot is showing up as "Playing now". (Cannot be per server.) *String: a sequance beginning and ending with ".*
+
+# Module `error_log.py`
+# Module `json_db.py`
+# Module `utilities.py`
+
 # Module `admin_tools.py`
 List of all commands in this module:
 
