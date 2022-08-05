@@ -214,6 +214,9 @@ async def delete_invoke_itself(ctx:commands.Context, time:S):
     """
     await asyncio.sleep(time+1)
     await ctx.message.delete()
+    
+# to do:
+# - auto-asign role for newbies
                   
 def setup(client_bot: commands.Bot):
     """Setup function which allows this module to be

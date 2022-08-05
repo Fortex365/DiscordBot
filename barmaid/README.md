@@ -4,6 +4,7 @@ Are you looking into discord bot with any soul for your discord server? :ghost:
 
 Barmaid has one! Barmaid Bot will roleplay her role on your server. Kind of.
 
+[:envelope: Invitation](https://discord.com/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands)
 
 ## Code asignment [CZ]:
 ```Student napíše Bota pro komunikační platformu Discord, v programovacím jazyce Python.
