@@ -217,6 +217,9 @@ async def delete_invoke_itself(ctx:commands.Context, time:S):
     
 # to do:
 # - auto-asign role for newbies
+# - invitelink bot for others
+# - mass dm
+# - mass channel users move
                   
 def setup(client_bot: commands.Bot):
     """Setup function which allows this module to be
