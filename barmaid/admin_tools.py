@@ -202,8 +202,8 @@ async def echo(ctx:commands.Context, *, message: str = None):
                        delete_after=S.DELETE_ORDINARY_MESSAGE)
         await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
         return
+    await ctx.message.delete()
     await ctx.send(message, delete_after=S.DELETE_ORDINARY_MESSAGE)
-    await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
     
 async def delete_invoke_itself(ctx:commands.Context, time:S):
     """Some time after command invocation has passed, the invoker's command message will be deleted.
