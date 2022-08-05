@@ -2,3 +2,8 @@
 *.pyc
 BetterDiscordPanel/
 ~$Bot na platformě Discord.pptx
+barmaid/*.log
+barmaid/data.json
+barmaid/data copy.json
+barmaid/data.json
+barmaid/data.json

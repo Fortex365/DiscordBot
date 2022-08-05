@@ -1,20 +1,21 @@
 import os
 import discord
+import logging
 from discord.ext import commands
 from utilities import Settings as S
 from json_db import insert_db, read_db
+from error_log import setup_logging
 
 # Intents manages some level of permissions
 INTENTS = discord.Intents.default()
-INTENTS.members = True
-INTENTS.presences = True
+INTENTS.members, INTENTS.presences = True, True
 
 
 # Code files to be loaded into client
 # utilities.py not meant to be extension to be loaded into client
 EXTENSIONS = ["admin_tools", "minigames"]
 
-async def get_prefix(client:commands.Bot, message):
+async def get_prefix(client:commands.Bot, message:discord.message.Message):
     if not message.guild:
         return commands.when_mentioned_or(S.DEFAULT_PREFIX)(client, message)
     
@@ -29,6 +30,9 @@ async def get_prefix(client:commands.Bot, message):
 
 # Client has to be top level variable because of @ decorator 
 client = commands.Bot(command_prefix=get_prefix, intents=INTENTS)
+
+# Log handler
+log_handle:logging.Logger = setup_logging()
 
 @client.event
 async def on_ready():
@@ -69,5 +73,7 @@ def run(client:commands.Bot):
     client.run(CONNECTION_TOKEN)
     
 if __name__ == "__main__":
-    # This is main module and only one to be executed.
+    """This is main module and only one to be executed."""
+    
+    # Boots up the client
     run(client)

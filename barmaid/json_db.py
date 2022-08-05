@@ -121,23 +121,3 @@ def insert_db(guid:int, key:str, value):
     except OSError:
         return None
     
-    
-#def test_read():
-#    assert read_db(907946271946440745, "prefix") == ".."
-#    assert read_db(907946271946440745, "non_existing_prefix") == None
-#
-#def test_update():
-#    pass
-#    
-#def test():
-#    test_read()
-#    test_update()
-#    
-#test()
-#
-#print(update_db(907946271946440745, "A", 5))
-#print(update_db(0, "prefix", "!"))
-#
-#print(insert_db(0, "prefix2", "?"))
-#print(insert_db(0, "prefix2", "ahoj"))
-    

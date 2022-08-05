@@ -20,8 +20,7 @@ async def ping(ctx:commands.Context):
       await ctx.send(
           f"Pong! Latency: {round(client.latency*MICROSECONDS_TO_MILISECONDS)} miliseconds.",
           tts=True, delete_after=S.DELETE_ORDINARY_MESSAGE)
-
-
+      
 @commands.command(aliases=["clr","delmsgs","delmsg"])
 @commands.guild_only()
 async def clear(ctx:commands.Context, amount:int = 1):
@@ -61,7 +60,7 @@ async def guid(ctx:commands.Context):
         ctx (commands.Context): Context deducted from invocation.
     """
     guid = ctx.guild.id
-    await ctx.message.author.send(f"{guid=}")
+    await ctx.message.author.send(f"{guid = }")
 
 def update_client_prefix(client:commands.Bot, new_prefix:str):
     """Changes the prefix the client listens to.
