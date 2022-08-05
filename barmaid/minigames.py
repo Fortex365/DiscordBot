@@ -4,7 +4,8 @@ import random
 from utilities import create_embed
 from utilities import Settings as S
 
-client = None
+# Will be assigned by installing extensions from the main module
+client:commands.Bot = None
        
 @commands.guild_only()        
 @commands.group(invoke_without_command=True,
@@ -49,8 +50,7 @@ async def rules(ctx):
     embed = create_embed("Deathroll rules:", game_rules)
     await ctx.send(embed=embed,
                    delete_after=S.DELETE_EMBED_ORDINARY)
-
-    
+ 
 @commands.guild_only()
 @commands.group()
 async def git(ctx):
@@ -61,7 +61,6 @@ async def git(ctx):
     """
     if ctx.invoked_subcommand is None:
         await ctx.send("Invalid git command passed.")
-
 
 @git.command()
 async def push(ctx, remote:str=None, branch:str=None):
@@ -77,8 +76,7 @@ async def push(ctx, remote:str=None, branch:str=None):
         await ctx.send("Invalid push arguments passed.")
     else:
         await ctx.send(f"Pushing to {remote} {branch}")
-    
-            
+              
 def setup(bot:commands.Bot):
     """Setup function which allows this module to be an extension
     loaded into the main file.

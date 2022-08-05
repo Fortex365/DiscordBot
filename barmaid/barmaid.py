@@ -17,15 +17,14 @@ EXTENSIONS = ["admin_tools", "minigames"]
 
 async def get_prefix(client:commands.Bot, message:discord.message.Message):
     if not message.guild:
-        return commands.when_mentioned_or(S.DEFAULT_PREFIX)(client, message)
+        return commands.when_mentioned_or(S.DEFAULT_SERVER_PREFIX)(client, message)
     
     prefix = read_db(message.guild.id, 'prefix')
     if not prefix:
-        is_okay = insert_db(message.guild.id, 'prefix', S.DEFAULT_PREFIX)
+        is_okay = insert_db(message.guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
         if not is_okay:
-            #await ctx.send(f"Oops...", delete_after=S.DELETE_ORDINARY_MESSAGE)
             return
-        prefix = S.DEFAULT_PREFIX
+        prefix = S.DEFAULT_SERVER_PREFIX
     return commands.when_mentioned_or(prefix)(client, message)
 
 # Client has to be top level variable because of @ decorator 

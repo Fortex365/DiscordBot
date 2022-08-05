@@ -8,7 +8,7 @@ class Settings:
         """Bot class containing settings loaded from configuration file.
         """
         # PREFIX
-        DEFAULT_PREFIX = ".."
+        DEFAULT_SERVER_PREFIX = ".."
         
         # MESSAGES
         with open("config.json", "r") as f:

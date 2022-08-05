@@ -98,19 +98,7 @@ async def set(ctx:commands.Context, new_prefix:str=None):
                        delete_after=S.DELETE_ORDINARY_MESSAGE)
         await delete_invoke_itself(ctx, S.DELETE_ORDINARY_MESSAGE)
         return
-    
-    #client = update_client_prefix(client, new_prefix)
-    
-    #guid = str(ctx.guild.id)
-    #with open("data.json", "r") as f:
-    #    old = json.load(f)
-    #new = old
-    #guild_data = new[guid]
-    #guild_data['prefix'] = new_prefix
-    #new[guid] = guild_data
-    #result = json.dumps(new, indent=2)
-    #with open("data.json", "w") as f:
-    #    f.write(result)
+
     if not update_db(ctx.guild.id, 'prefix', new_prefix):
         await ctx.send(f"Oops. Something internally went wrong with sending the data.",
                        delete_after=S.DELETE_ORDINARY_MESSAGE)
@@ -144,7 +132,6 @@ async def kick(ctx:commands.Context, user: discord.Member, *,
         f"Kicked {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
     await user.send(embed=kick)
 
-
 @kick.error
 async def kick_error(error:discord.errors, ctx:commands.Context):
     """Informs server owner deducted from context about who tried
@@ -160,8 +147,7 @@ async def kick_error(error:discord.errors, ctx:commands.Context):
     
         await direct_message.send(
             f"Missing permissions (kick_members): {ctx.message.author}")
-    
-    
+      
 @commands.command()
 @commands.guild_only()
 @commands.has_permissions(ban_members = True)
@@ -187,7 +173,6 @@ async def ban(ctx:commands.Context, user: discord.Member, *,
         f"Banned {str(user)}!", f"Reason: {reason}\nBy: {ctx.author}")
     await user.send(embed=kick)
 
-
 @ban.error
 async def ban_error(error:discord.errors, ctx:commands.Context):
     """Informs server owner deducted from context about who tried
@@ -203,8 +188,7 @@ async def ban_error(error:discord.errors, ctx:commands.Context):
         
         await direct_message.send(
             f"Missing permissions (ban_members): {ctx.message.author}")
-
-     
+  
 @commands.command()
 async def echo(ctx:commands.Context, *, message: str = None):
     """Echoes the message the command is invoked with.
@@ -230,8 +214,7 @@ async def delete_invoke_itself(ctx:commands.Context, time:S):
     """
     await asyncio.sleep(time+1)
     await ctx.message.delete()
-           
-        
+                  
 def setup(client_bot: commands.Bot):
     """Setup function which allows this module to be
     an extension loaded into the main file.
