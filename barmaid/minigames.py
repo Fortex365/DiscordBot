@@ -1,8 +1,6 @@
-import discord
-from discord.ext import commands
 import random
-from utilities import create_embed
-from utilities import Settings as S
+import utilities as S
+from discord.ext import commands
 
 # Will be assigned by installing extensions from the main module
 client:commands.Bot = None
@@ -47,7 +45,7 @@ async def rules(ctx):
     "from multiplication. The randomly rolled number must the other player " \
     "use as the new rolling upperbound. First player whom reaches number " \
     "1 loses."
-    embed = create_embed("Deathroll rules:", game_rules)
+    embed = S.create_embed("Deathroll rules:", game_rules)
     await ctx.send(embed=embed,
                    delete_after=S.DELETE_EMBED_ORDINARY)
  

@@ -1,4 +1,3 @@
-import discord
 import logging
 
 def setup_logging():

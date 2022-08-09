@@ -17,7 +17,7 @@ def read_db(guid:int, key:str):
         OSError: If something failed reading the file.
 
     Returns:
-        (any, None): Corresponding value to the key, or None if wasn't found any. 
+        (any | False): Corresponding value to the key, or False if wasn't found any. 
     """
     guid_str = str(guid)
     
@@ -25,11 +25,11 @@ def read_db(guid:int, key:str):
         with open(DATABASE_NAME, READ_FLAG) as f:
             json_obj = json.load(f)
             try:
-                guild_data = json_obj[guid_str]
-                value_by_key = guild_data[key]
+                value_by_key = json_obj[guid_str][key]
+                # can return None which was converted from json's null
                 return value_by_key
             except KeyError as e:
-                return None
+                return False
     # for now
     except OSError as e:
         raise OSError(e)
@@ -47,29 +47,26 @@ def update_db(guid:int, key:str, new_value):
         OSError: If something failed reading/writing the file.
 
     Returns:
-        (dict, None): Returns the updated database as python dictionary, or None
+        (str | None): Returns the updated database as string, or None
         if key failed.
     """
     guid_str = str(guid)
     
     try:
         with open(DATABASE_NAME, READ_FLAG) as f:
-            old_obj = json.load(f)
+            db_in_json = json.load(f)
     # for now
     except OSError as e:
         raise OSError(e)
     
-    new_obj = old_obj
     try:
-        guild_data = new_obj[guid_str]
         # If key isn't present in database
         if not read_db(guid, key):
             return None
-        guild_data[key] = new_value
-        new_obj[guid_str] = guild_data
+        db_in_json[guid_str][key] = new_value
     except KeyError:
         return None
-    result = json.dumps(new_obj, indent=2)
+    result = json.dumps(db_in_json, indent=2)
     
     try:
         with open(DATABASE_NAME, WRITE_FLAG) as f:
@@ -92,7 +89,7 @@ def insert_db(guid:int, key:str, value):
         OSError: If something failed reading/writing the file.
         
     Returns:
-        (dict, None): Returns updated database as python dictionary or None, 
+        (str | None): Returns updated database as string or None, 
         if you key already existed.
     """
     guid_str = str(guid)
@@ -103,21 +100,29 @@ def insert_db(guid:int, key:str, value):
     
     try:
         with open(DATABASE_NAME, READ_FLAG) as f:
-            old_obj = json.load(f)
+            db_in_json = json.load(f)
     except OSError:
         return None
     
-    new_obj = old_obj
-    key_value_data = {
-        key: value
-    }
-    new_obj[guid_str] = key_value_data
-    to_save = json.dumps(new_obj, indent=2)
+    db_in_json[guid_str][key] = value
+    to_save = json.dumps(db_in_json, indent=2)
     
     try:
         with open(DATABASE_NAME, WRITE_FLAG) as f:
             f.write(to_save)
-            return new_obj
+            return db_in_json
     except OSError:
         return None
+    
+if __name__ == "__main__":
+    print(read_db(907946271946440745, "prefix"))
+    print(insert_db(907946271946440745, "auto-role", "<@&1005976398420267008>"))
+    
+    d = {"pes": 1}
+    a = frozenset(d)
+    try:
+        a["kocka"] = 2
+    except:
+        pass
+    print(a)
     
