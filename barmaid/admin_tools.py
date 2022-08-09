@@ -24,6 +24,7 @@ async def ping(ctx:commands.Context):
       
 @commands.command(aliases=["clr","delmsgs","delmsg"])
 @commands.guild_only()
+@commands.has_permissions(manage_messages=True)
 async def clear(ctx:commands.Context, amount:int = 1):
     """Clears the number of messages in the channel where it was invoked.
 
