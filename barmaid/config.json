@@ -1,9 +1,9 @@
 {
   "DeleteMessages": {
-    "DELETE_ORDINARY_MESSAGE": 15,
+    "DELETE_COMMAND_INVOKE": 15,
     "DELETE_COMMAND_ERROR": 25,
-    "DELETE_EMBED_ORDINARY": 300,
-    "DELETE_EMBED_SYSTEM": 3600
+    "DELETE_EMBED_POST": 300,
+    "DELETE_EMBED_HELP": 120
   },
   "Activity": {
     "CLIENT_ACTIVITY": "Your local e-Barmaid"

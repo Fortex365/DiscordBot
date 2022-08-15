@@ -5,6 +5,41 @@ READ_FLAG = "r"
 WRITE_FLAG = "w"
 READ_WRITE_FLAG = "rw"
 
+def open_file() -> dict:
+    """Opens json file and returns it as dict object.
+
+    Raises:
+        OSError: File open can fail
+
+    Returns:
+        dict: Dict made out of json file
+    """
+    try:
+        with open(DATABASE_NAME, READ_FLAG) as f:
+            json_as_dict = json.load(f)
+    except OSError as e:
+        raise OSError(e)
+    return json_as_dict
+
+def flush_file(data:dict) -> str:
+    """Flushes dict obj into json file
+
+    Args:
+        data (dict): Dictionary to flush
+
+    Raises:
+        OSError: Write operation can fail
+
+    Returns:
+        str: String that was flushed
+    """
+    try:
+        with open(DATABASE_NAME, WRITE_FLAG) as f:
+            f.write(data)
+            return data
+    except OSError as e:
+        raise OSError(e)
+
 def read_db(guid:int, key:str):
     """Reads the value corresponding by key in the database by given
     guild id (guid) searched by.
@@ -13,26 +48,17 @@ def read_db(guid:int, key:str):
         guid (int): Guild id searched by.
         key (str): Any key value we search for.
 
-    Raises:
-        OSError: If something failed reading the file.
-
     Returns:
         (any | False): Corresponding value to the key, or False if wasn't found any. 
-    """
-    guid_str = str(guid)
+    """   
+    guild_str = str(guid)
     
+    data = open_file()
     try:
-        with open(DATABASE_NAME, READ_FLAG) as f:
-            json_obj = json.load(f)
-            try:
-                value_by_key = json_obj[guid_str][key]
-                # can return None which was converted from json's null
-                return value_by_key
-            except KeyError as e:
-                return False
-    # for now
-    except OSError as e:
-        raise OSError(e)
+        value_by_key = data[guild_str][key]
+        return value_by_key
+    except KeyError as e:
+        return False
 
 def update_db(guid:int, key:str, new_value):
     """Updates existing key-pair in the database stored by guild id (guid).
@@ -52,31 +78,20 @@ def update_db(guid:int, key:str, new_value):
     """
     guid_str = str(guid)
     
+    data = open_file()
     try:
-        with open(DATABASE_NAME, READ_FLAG) as f:
-            db_in_json = json.load(f)
-    # for now
-    except OSError as e:
-        raise OSError(e)
-    
-    try:
-        # If key isn't present in database
         if not read_db(guid, key):
             return None
-        db_in_json[guid_str][key] = new_value
+        data[guid_str][key] = new_value
     except KeyError:
         return None
-    result = json.dumps(db_in_json, indent=2)
     
-    try:
-        with open(DATABASE_NAME, WRITE_FLAG) as f:
-            f.write(result)
-        return result
-    # for now
-    except OSError as e:
-        raise OSError(e)
+    new_data = json.dumps(data, indent=2)
     
-def insert_db(guid:int, key:str, value):
+    result = flush_file(new_data)
+    return result
+    
+def insert_db(guid:int, key:str, value) -> str:
     """Inserts new key into the database with its value.
     If key already exists, returns None.
     
@@ -84,9 +99,6 @@ def insert_db(guid:int, key:str, value):
         guid (int): Guild id in the database
         key (str): New key we add value to
         value (any): Value to the key
-
-    Raises:
-        OSError: If something failed reading/writing the file.
         
     Returns:
         (str | None): Returns updated database as string or None, 
@@ -94,35 +106,61 @@ def insert_db(guid:int, key:str, value):
     """
     guid_str = str(guid)
     
-    # If key is already present in database
     if read_db(guid, key):
         return None
     
-    try:
-        with open(DATABASE_NAME, READ_FLAG) as f:
-            db_in_json = json.load(f)
-    except OSError:
+    data = open_file()
+    data[guid_str][key] = value
+    to_save = json.dumps(data, indent=2)
+    
+    result = flush_file(to_save)
+    return result
+
+def delete_from_db(guid:int, key:str) -> str:
+    """Deletes existing key-pair in server's dictionary.
+
+    Args:
+        guid (int): Guild id that dict belongs to.
+        key (str): Key to delete with its value.
+
+    Returns:
+       str: Guild dict (as str) after deletion.
+    """
+    guid_str = str(guid)
+    
+    if not read_db(guid, key):
         return None
     
-    db_in_json[guid_str][key] = value
-    to_save = json.dumps(db_in_json, indent=2)
+    data = open_file()
+    del data[guid_str][key]
+    to_save = json.dumps(data, indent=2)
     
-    try:
-        with open(DATABASE_NAME, WRITE_FLAG) as f:
-            f.write(to_save)
-            return db_in_json
-    except OSError:
-        return None
+    result = flush_file(to_save)
+    return result  
+
+def add_guild(guid:int) -> str:
+    """Adds new guild into database.
+
+    Args:
+        guid (int): Guild id to add.
+
+    Returns:
+        str: New json database
+    """
+    guid_str = str(guid)
+    
+    data = open_file()
+    data[guid_str] = {}
+    to_save = json.dumps(data, indent=2)
+    
+    result = flush_file(to_save)
+    return result
     
 if __name__ == "__main__":
-    print(read_db(907946271946440745, "prefix"))
-    print(insert_db(907946271946440745, "auto-role", "<@&1005976398420267008>"))
-    
-    d = {"pes": 1}
-    a = frozenset(d)
-    try:
-        a["kocka"] = 2
-    except:
-        pass
-    print(a)
-    
+    pass
+
+"""
+TO-DO
+rewrite basic blocking i/o files as nonblocking asynchronous i/o
+with aiofiles https://pypi.org/project/aiofiles/
+"""    

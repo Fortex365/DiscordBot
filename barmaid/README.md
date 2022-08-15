@@ -3,6 +3,7 @@ Do you like inn enviroment with barmans or barmaids serving you drinks all night
 Are you looking into discord bot with any soul for your discord server? :ghost:
 
 Barmaid has one! Barmaid Bot will roleplay her role on your server. Kind of.
+Also if you hate how command invocation messages and some responses are left in the text channel, don't worry -- Barmaid has got you covered.
 
 [:envelope: Invitation](https://discord.com/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands)
 
@@ -42,11 +43,10 @@ Can look something like this:
 ```json
 {
   "DeleteMessages": {
-    "DELETE_HOUR": 3600,
-    "DELETE_ORDINARY_MESSAGE": 15,
-    "DELETE_COMMAND_ERROR": 15,
-    "DELETE_EMBED_ORDINARY": 300,
-    "DELETE_EMBED_SYSTEM": 3600
+    "DELETE_COMMAND_INVOKE": 15,
+    "DELETE_COMMAND_ERROR": 25,
+    "DELETE_EMBED_POST": 300,
+    "DELETE_EMBED_HELP": 120
   },
   "Activity": {
     "CLIENT_ACTIVITY": "Your local e-Barmaid"
@@ -54,10 +54,10 @@ Can look something like this:
 }
 ```
 You can modify this data to your own liking:
-- "DELETE_ORDINARY_MESSAGE" - Regular message (respond to command) until its deletion. *Number: time in seconds.*
+- "DELETE_COMMAND_INVOKE" - Regular message (respond to command) until its deletion. *Number: time in seconds.*
 - "DELETE_COMMAND_ERROR" - Regular error message (respond to command) until its deletion. *Number: time in seconds.*
-- "DELETE_EMBED_ORDINARY" - Important message (respond to command, announce etc.) until its deletion. *Number: time in seconds.*
-- "DELETE_EMBED_SYSTEM" - Important message (from bot) until its deletion. *Number: time in seconds.*
+- "DELETE_EMBED_POST" - Important message (respond to command, announce etc.) until its deletion. *Number: time in seconds.*
+- "DELETE_EMBED_HELP" - Command help message until its deletion. *Number: time in seconds.*
 - "CLIENT_ACTIVITY" - Activity bot is showing up as "Playing now". (Cannot be per server.) *String: a sequance beginning and ending with ".*
 
 # Module `error_log.py`
@@ -70,20 +70,36 @@ List of all commands in this module:
 - `ping` - Outputs the ping between the client and the server.
 - `clear` - Clears the number of messages in the channel. *Permission required.*
 - `invoker_id` Sends the discord member number identificator to direct message. *Permission required.*
+- `echo` - Echoes the message.
 - `guid` - Sends guild identification number to direct message. *Permission required.*
 - `prefix` - Responds with the current prefix is set on the server.
-    - `prefix set` - Sets the new prefix for the server. *Permission required.*
+
+  - `setprefix` - Sets the new prefix for the server. *Permission required.*
 - `kick` - Kicks the user from the server. *Permission required.*
 
-Example:
-```
-<prefix>kick @user
->>> Kicked @user! Reason: No reason provided 
+  Example:
+  ```
+  <prefix>kick @user
+  >>> Kicked @user! Reason: No reason provided 
 
-By: @user
-```
+  By: @user
+  ```
 - `ban` - Bans the user from the server. *Permission required.*
-- `echo` - Echoes the message.
+- `move` - Moves all connected members from channel1 to channel2. *Permission required.*
+  - `move help` - Gives you help for the command.
+- `massdm` - Sends direct message to all server members. *Disclaimer: owner only, small servers only.* Otherwise it would be against Discord ToS (spam, phishing).
+- `rules` - Shows the server enforced rules. Rules are sent for each member who joins the server.
+  - `rules set` - Set the new rules. *Permissions required.*
+- `invite` - Allows you share bot with your friends.
+- `finvite` - Allows you easily to invite friends to your server.
+  - `finvite help` - Help for command usage.
+- `autorole` - Set the role to auto-asign when new member joins server.
+  - `autorole help` - Help for command usage.
+  - `autorole set` - Set the role to asign.
+  - `autorole remove` - Remove role to asign.
+
+
+
 
 ## Module `minigames.py`
 List of all commands in this module:

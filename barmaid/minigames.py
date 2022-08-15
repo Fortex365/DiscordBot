@@ -2,8 +2,11 @@ import random
 import utilities as S
 from discord.ext import commands
 
-# Will be assigned by installing extensions from the main module
-client:commands.Bot = None
+"""
+Client instance loaded after barmaid.load_extensions() passes its instance into
+minigames.setup().
+"""
+CLIENT:commands.Bot = None
        
 @commands.guild_only()        
 @commands.group(invoke_without_command=True,
@@ -47,7 +50,7 @@ async def rules(ctx):
     "1 loses."
     embed = S.create_embed("Deathroll rules:", game_rules)
     await ctx.send(embed=embed,
-                   delete_after=S.DELETE_EMBED_ORDINARY)
+                   delete_after=S.DELETE_EMBED_POST)
  
 @commands.guild_only()
 @commands.group()
@@ -83,10 +86,11 @@ def setup(bot:commands.Bot):
         bot: The bot instance itself, passed in
         from barmaid.load_extention("minihames").
     """
-    global client
-    client = bot
-    client.add_command(deathroll)
-    client.add_command(git)
+    global CLIENT
+    
+    bot.add_command(deathroll)
+    bot.add_command(git)
+    CLIENT = bot
 
 if __name__ == "__main__":
     """In case of trying to execute this module, nothing should happen.
