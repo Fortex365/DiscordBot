@@ -59,14 +59,13 @@ async def event(ctx:Context):
         date = None if date.content == "skip" else date.content
         
         # Embed creation of event
-        #ts = datetime.strptime(date, "%d/%m/%Y") if date != "" else Embed.Empty
         emb = Embed()
         event_hash = blake2b(digest_size=10).hexdigest()
         
-        emb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
-        emb.add_field(name="Name", value=title, inline=True) if title is not None else None
-        emb.add_field(name="Date", value=date, inline=True) if date is not None else None
-        emb.add_field(name="Description", value=desc, inline=False) if desc is not None else None
+        emb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
+        emb.add_field(name="Name", value=title, inline=True) if title else None
+        emb.add_field(name="Date", value=date, inline=True) if date else None
+        emb.add_field(name="Description", value=desc, inline=False) if desc else None
         emb.add_field(name="Sign-ups", value="N/A", inline=True)
         emb.add_field(name="Calendar", value="N/A", inline=True)
         emb.set_footer(text=event_hash)
@@ -117,7 +116,7 @@ async def usr_input(ctx:Context, bot:commands.Bot, timeout:int=60) -> Message:
         return
     return msg   
     
-def setup(target: commands.Bot):
+async def setup(target: commands.Bot):
     """Setup function which allows this module to be
     an extension loaded into the main file.
 

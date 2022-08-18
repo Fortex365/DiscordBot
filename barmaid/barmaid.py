@@ -1,6 +1,7 @@
 import os
+
+import asyncio
 import logging
-import utilities as S
 from datetime import datetime
 from typing import Union
 from discord import Member, Intents, Game, Status, Reaction
@@ -8,12 +9,15 @@ from discord import Role, Guild, Embed, Colour, User
 from discord.message import Message
 from discord.ext import commands
 from discord.ext.commands import Context
+
+import utilities as S
 from jsonyzed_db import insert_db, read_db, add_guild
 from error_log import setup_logging
 
 # Intents manages some level of permissions bot can do
 INTENTS = Intents.default()
 INTENTS.members, INTENTS.presences, INTENTS.reactions = True, True, True
+INTENTS.message_content = True
 
 # Code files to be loaded into client
 # utilities.py not meant to be extension to be loaded into client
@@ -37,9 +41,9 @@ async def get_prefix(client:commands.Bot, message:Message):
     if not message.guild:
         return commands.when_mentioned_or(S.DEFAULT_SERVER_PREFIX)(client, message)
     
-    prefix = read_db(message.guild.id, 'prefix')
+    prefix = await read_db(message.guild.id, 'prefix')
     if not prefix:
-        is_okay = insert_db(message.guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
+        is_okay = await insert_db(message.guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
         if not is_okay:
             return
         prefix = S.DEFAULT_SERVER_PREFIX
@@ -52,7 +56,9 @@ CLIENT = commands.Bot(command_prefix=get_prefix, intents=INTENTS)
 log_handle:logging.Logger = setup_logging()
 
 @CLIENT.event
-async def on_reaction_add(reaction:Reaction, who_clicked:Union[Member, User]):    
+async def on_reaction_add(reaction:Reaction, who_clicked:Union[Member, User]):
+    """WIP THIS IS JUST A TEST 
+    """    
     msg:Message = reaction.message
     if msg.guild:
         if who_clicked.bot:
@@ -70,9 +76,14 @@ async def on_ready():
 
 @CLIENT.event
 async def on_guild_join(guild:Guild):
-    success = add_guild(guild.id)
+    """If bots joins new server it adds its guid to a database
+
+    Args:
+        guild (Guild): Guild bot joined in
+    """
+    success = await add_guild(guild.id)
     while not success:
-        success = add_guild(guild.id)
+        success = await add_guild(guild.id)
 
 @CLIENT.event
 async def on_member_join(member:Member):
@@ -83,7 +94,7 @@ async def on_member_join(member:Member):
         member (Member): Member who joined server
     """
     # Auto-asign role given by guild
-    role_asigned_by_guild:int = read_db(member.guild.id, "auto-role")
+    role_asigned_by_guild:int = await read_db(member.guild.id, "auto-role")
     member_guild:Guild = member.guild
     if role_asigned_by_guild:
         role_to_give:Role = member_guild.get_role(role_id=role_asigned_by_guild)
@@ -93,7 +104,14 @@ async def on_member_join(member:Member):
     await send_guild_rules(member, member_guild)
     
 async def send_guild_rules(member:Member, guild_joined:Guild):
-    guild_rules = read_db(guild_joined.id, "guild-rules")
+    """For newly joined member on a server, bot sends this user server specified
+    rules.
+
+    Args:
+        member (Member): Member who joined
+        guild_joined (Guild): Guild which member joined
+    """
+    guild_rules = await read_db(guild_joined.id, "guild-rules")
     if guild_rules:
         emb = Embed(title=f"[{guild_joined.name}] server's rules:",
                     description=guild_rules,
@@ -132,23 +150,24 @@ async def on_command_error(ctx:Context, error:commands.CommandError):
         return
     elif isinstance(error, commands.CommandInvokeError):
         raise error
-        return
+        #return
     raise error
     
 @CLIENT.event
 async def on_message_error(ctx:Context, error):
     raise error
 
-def install_extensions(target:commands.Bot):
+async def install_extensions(target:commands.Bot):
     """Install all the extentions in the other files to the client.
 
     Args:
         client (commands.Bot): Instance of the bot itself.
     """
     for ext in EXTENSIONS:
-        target.load_extension(ext) 
-                 
-def run(client:commands.Bot):
+        await target.load_extension(ext) 
+
+# Useless in discord version 2.0.0 when client.load_extension() became async               
+def boot(client:commands.Bot):
     """Method serves as a main function which is run when this module is run. 
     Meant to be the only module from this package that can be executed.
     
@@ -162,5 +181,9 @@ def run(client:commands.Bot):
 if __name__ == "__main__":
     """This is main module and only one to be executed."""
     
+    CONNECTION_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
+    loop = asyncio.get_event_loop()
+    
     # Boots up the client
-    run(CLIENT)
+    loop.run_until_complete(install_extensions(CLIENT))
+    CLIENT.run(CONNECTION_TOKEN)

@@ -78,7 +78,7 @@ async def push(ctx, remote:str=None, branch:str=None):
     else:
         await ctx.send(f"Pushing to {remote} {branch}")
               
-def setup(bot:commands.Bot):
+async def setup(bot:commands.Bot):
     """Setup function which allows this module to be an extension
     loaded into the main file.
 
