@@ -39,8 +39,8 @@ async def delete_command_user_invoke(ctx:commands.Context, time:int):
         ctx (commands.Context): Context to delete the message from.
         time (int): Time to pass before delete happens.
     """
-    await asyncio.sleep(time+1)
-    await ctx.message.delete()
+    #await asyncio.sleep(time+1)
+    await ctx.message.delete(delay=time+1)
 
 async def database_fail(ctx:commands.Context):
     """Informs the user that something unexpected went wrong.

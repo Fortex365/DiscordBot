@@ -2,7 +2,7 @@ import logging
 
 def setup_logging():
     logger = logging.getLogger('discord')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.WARNING)
 
     handler = logging.FileHandler(filename='barmaid.log', encoding='utf-8', mode='w')
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))

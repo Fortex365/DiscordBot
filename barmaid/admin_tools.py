@@ -701,4 +701,5 @@ if __name__ == "__main__":
 
 """
 TO DO:
+filter banwords
 """
