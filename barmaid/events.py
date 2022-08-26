@@ -25,7 +25,7 @@ def validate_date(date:str)->datetime:
 @commands.group(invoke_without_command=True)
 @commands.guild_only()
 @commands.has_permissions(manage_messages=True)
-async def event(ctx:Context):
+async def event(ctx:Context, count_people:bool=False, calendar:bool=False):
     SKIP_OR_CANCEL_STRING = "\nType `skip` (to skip this" \
             " argument) or `cancel` (to cancel command)."
 
