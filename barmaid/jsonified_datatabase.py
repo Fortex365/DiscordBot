@@ -160,8 +160,7 @@ async def add_guild(guid:int) -> str:
     return result
 
 async def test():
-    a = await open_file()
-    print(a)
+    pass
        
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
@@ -169,6 +168,4 @@ if __name__ == "__main__":
 
 """
 TO-DO
-rewrite basic blocking i/o files as nonblocking asynchronous i/o
-with aiofiles https://pypi.org/project/aiofiles/
 """    

@@ -11,7 +11,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 import utilities as S
-from jsonyzed_db import insert_db, read_db, add_guild
+from jsonified_datatabase import insert_db, read_db, add_guild
 from error_log import setup_logging
 
 # Intents manages some level of permissions bot can do
@@ -19,8 +19,7 @@ INTENTS = Intents.default()
 INTENTS.members, INTENTS.presences, INTENTS.reactions = True, True, True
 INTENTS.message_content = True
 
-# Code files to be loaded into client
-# utilities.py not meant to be extension to be loaded into client
+# Modules to be loaded into client
 EXTENSIONS = [
     "admin_tools",
     "minigames",
@@ -60,10 +59,11 @@ async def on_reaction_add(reaction:Reaction, who_clicked:Union[Member, User]):
     """WIP THIS IS JUST A TEST 
     """    
     msg:Message = reaction.message
+    
     if msg.guild:
         if who_clicked.bot:
             return
-        if reaction.emoji in ["\U00002714","\U0000274C"]:
+        if reaction.emoji in ["📝","❌", "🤷‍♀️"]:
             await msg.channel.send(f"{who_clicked.name} reacted {reaction.emoji}")
 
 @CLIENT.event
@@ -165,18 +165,6 @@ async def install_extensions(target:commands.Bot):
     """
     for ext in EXTENSIONS:
         await target.load_extension(ext) 
-
-# Useless in discord version 2.0.0 when client.load_extension() became async               
-def boot(client:commands.Bot):
-    """Method serves as a main function which is run when this module is run. 
-    Meant to be the only module from this package that can be executed.
-    
-    Args:
-        client (commands.Bot): Instance of the bot itself.
-    """   
-    CONNECTION_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
-    install_extensions(client)
-    client.run(CONNECTION_TOKEN)
     
 if __name__ == "__main__":
     """This is main module and only one to be executed."""

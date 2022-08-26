@@ -19,9 +19,6 @@ work for example at events.usr_input(ctx, client).
 """
 CLIENT:commands.Bot = None
 
-def validate_date(date:str)->datetime:
-    pass
-
 @commands.group(invoke_without_command=True)
 @commands.guild_only()
 @commands.has_permissions(manage_messages=True)

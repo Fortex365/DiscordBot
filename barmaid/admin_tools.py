@@ -6,9 +6,10 @@ from discord.ext.commands import errors
 
 import utilities as S
 from utilities import delete_command_user_invoke, database_fail
-from jsonyzed_db import delete_from_db, insert_db, read_db, update_db
+from jsonified_datatabase import delete_from_db, insert_db, read_db, update_db
 
 from barmaid import CLIENT
+
 MICROSECONDS_TO_MILISECONDS = 1000
 
 @commands.command(aliases=["pong","ping!","pong!","latency"])
