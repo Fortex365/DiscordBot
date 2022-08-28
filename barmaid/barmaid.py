@@ -11,13 +11,13 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 import utilities as S
-from jsonified_datatabase import insert_db, read_db, add_guild
+from jsonified_database import insert_db, read_db, add_guild
 from error_log import setup_logging
 
 # Intents manages some level of permissions bot can do
 INTENTS = Intents.default()
-INTENTS.members, INTENTS.presences, INTENTS.reactions = True, True, True
-INTENTS.message_content = True
+INTENTS.members, INTENTS.presences = True, True
+INTENTS.message_content, INTENTS.reactions = True, True
 
 # Modules to be loaded into client
 EXTENSIONS = [
@@ -35,7 +35,7 @@ async def get_prefix(client:commands.Bot, message:Message):
         message (Message): Any message that can contain prefix
 
     Returns:
-        list: list of prefixes outputed via commands.when_mentioned_or
+        list: list of prefixes outputed via commands.when_mentioned_or()
     """
     if not message.guild:
         return commands.when_mentioned_or(S.DEFAULT_SERVER_PREFIX)(client, message)
@@ -133,7 +133,7 @@ async def on_message(msg:Message):
     if msg.guild:
         await CLIENT.process_commands(msg)
         return
-    await msg.channel.send("No pre-coded answer here.")
+    await msg.channel.send("I don't serve any drinks here.")
     
 @CLIENT.event
 async def on_command_error(ctx:Context, error:commands.CommandError):

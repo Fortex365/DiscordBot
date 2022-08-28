@@ -6,7 +6,7 @@ from discord.ext.commands import errors
 
 import utilities as S
 from utilities import delete_command_user_invoke, database_fail
-from jsonified_datatabase import delete_from_db, insert_db, read_db, update_db
+from jsonified_database import delete_from_db, insert_db, read_db, update_db
 
 from barmaid import CLIENT
 

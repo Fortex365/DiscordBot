@@ -2,6 +2,7 @@ import asyncio
 import utilities as S
 from datetime import datetime
 from utilities import delete_command_user_invoke
+from scheduled_events import ScheduledEvents
 from hashlib import blake2b
 from typing import Union
 from discord import Embed, Member, channel, Invite
@@ -19,12 +20,92 @@ work for example at events.usr_input(ctx, client).
 """
 CLIENT:commands.Bot = None
 
+async def ask_for(ctx:Context, requested_input:str)->str:
+    # Asks in chat for for requested input
+    await ctx.send(f"{requested_input}", delete_after=S.DELETE_MINUTE)   
+    # Gets in chat asnwer for the input
+    answer = await usr_input(ctx, CLIENT)
+    # If was valid message, sets it to be cleared later
+    await answer.delete(delay=S.DELETE_MINUTE) if answer is not None else None
+    # If was invalid message or timeouted
+    if is_timedout_or_cancelled(answer):
+        return
+    # Parse the answer 
+    answer = None if answer.content == "skip" else answer.content
+    return answer
+
 @commands.group(invoke_without_command=True)
 @commands.guild_only()
 @commands.has_permissions(manage_messages=True)
-async def event(ctx:Context, count_people:bool=False, calendar:bool=False):
+async def event(ctx:Context):
+    if not ctx.invoked_subcommand:
+        SKIP_OR_CANCEL_STRING = "\n> Type `skip` (to skip this" \
+        " argument) or `cancel` (to cancel command)."
+        TIMESTAMP_FORMAT = "\n> Note: valid date is in this format " \
+            "`2000-1-31 00:00:00`"
+        YES_OR_NO = "\n> Please type either `yes` or `no` to this question."
+        GET_VOICE_ID = "\n> To get voice channel id, visit discord settings and" \
+            " toggle developer as \"On\" then right-click desired voice-channel and copy its id."
+        FORMAT_FROM = "%Y-%m-%d %H:%M:%S"
+        FORMAT_TO = "%Y-%m-%dT%H:%M:%S"
+        
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+        
+        # Get name of scheduled event
+        name = await ask_for(ctx, f"**What the title should be?**"+SKIP_OR_CANCEL_STRING)
+        # Get desc of sch. event
+        desc = await ask_for(ctx, f"**What the description is?**"+SKIP_OR_CANCEL_STRING)
+        # Get start timestamp
+        start = await ask_for(ctx, f"**When the event should start?**"+TIMESTAMP_FORMAT)
+        start = datetime.strptime(start, FORMAT_FROM).strftime(FORMAT_TO)
+        # Get end ts.
+        end = await ask_for(ctx, f"**When the event ends?**"+TIMESTAMP_FORMAT)
+        end = datetime.strptime(end, FORMAT_FROM).strftime(FORMAT_TO)
+        # Decide location
+        is_voice = await ask_for(ctx, f"**Do you wish the event to take place in voice-room?**"+YES_OR_NO)
+        
+        if is_voice.lower() == "yes":
+            # Get channel id
+            channel = await ask_for(ctx, f"**Whats the channel id then?**"+GET_VOICE_ID)
+            is_valid = ctx.guild.get_channel(int(channel))
+            if not is_valid:
+                await ctx.send(f"Thats not valid voice-channel id in current guild!",
+                         delete_after=S.DELETE_COMMAND_ERROR)
+                return
+            
+            await ScheduledEvents.create_guild_event(
+                ctx.guild.id,
+                name,
+                desc,
+                start,
+                end,
+                None,
+                channel
+            )
+            await ctx.send(f"{ctx.author.mention} **created `{name}` event!**" \
+                "\nFor more info visit server events in the top left corner.",
+                           delete_after=S.DELETE_DAY)
+        else:
+            # Get location name
+            tmp_location = await ask_for(ctx, f"**Whats the location?**")
+            location = {"location": tmp_location}
+        
+            await ScheduledEvents.create_guild_event(
+                ctx.guild.id,
+                name,
+                desc,
+                start,
+                end,
+                location
+            )
+            await ctx.send(f"{ctx.author.mention} **created `{name}` event!**" \
+                "\nFor more info visit server events in the top left corner.",
+                           delete_after=S.DELETE_DAY)
+
+@event.command()
+async def simple(ctx:Context, count_people:bool=False, calendar:bool=False):
     SKIP_OR_CANCEL_STRING = "\nType `skip` (to skip this" \
-            " argument) or `cancel` (to cancel command)."
+        " argument) or `cancel` (to cancel command)."
 
     if not ctx.invoked_subcommand:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
