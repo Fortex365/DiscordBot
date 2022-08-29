@@ -42,7 +42,7 @@ async def event(ctx:Context):
         SKIP_OR_CANCEL_STRING = "\n> Type `skip` (to skip this" \
         " argument) or `cancel` (to cancel command)."
         TIMESTAMP_FORMAT = "\n> Note: valid date is in this format " \
-            "`2000-1-31 00:00:00`"
+            "`2000-1-31 00:00:00`. Cannot make event in past datetime."
         YES_OR_NO = "\n> Please type either `yes` or `no` to this question."
         GET_VOICE_ID = "\n> To get voice channel id, visit discord settings and" \
             " toggle developer as \"On\" then right-click desired voice-channel and copy its id."

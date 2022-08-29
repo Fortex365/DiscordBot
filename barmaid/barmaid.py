@@ -131,9 +131,48 @@ async def on_message(msg:Message):
     if msg.author == CLIENT.user:
         return
     if msg.guild:
+        await check_blacklist(msg.guild, msg)
         await CLIENT.process_commands(msg)
         return
     await msg.channel.send("I don't serve any drinks here.")
+
+@CLIENT.event
+async def on_message_edit(before:Message, after:Message):
+    if after.author == CLIENT.user:
+        return
+    if after.guild:
+        await check_blacklist(after.guild, after)
+
+async def check_blacklist(guild:Guild, msg:Message):
+    """Checks if guild's blacklisted words are contained in message.
+    Deletes the message if it contains blacklisted content and warns its author.
+
+    Args:
+        guild (Guild): Guild's blacklist to check
+        msg (Message): Message to check
+    """
+    if await is_blacklist_exception(msg):
+        return
+    
+    bl = await read_db(guild.id, "blacklist")
+    if not bl:
+        return
+    
+    msg_content = msg.content
+    
+    for w in bl:
+        if w in msg_content:
+            await msg.delete()
+            await msg.author.send(f"Word \"{w}\" is restricted to use in `{guild.name}`")
+
+async def is_blacklist_exception(msg:Message)->bool:
+    FILTER_REMOVE_COMMAND_EXCEPTION = "filter remove"
+    msg_content = msg.content
+    msg_content.lower()
+    
+    if FILTER_REMOVE_COMMAND_EXCEPTION in msg_content:
+        return True
+    return False
     
 @CLIENT.event
 async def on_command_error(ctx:Context, error:commands.CommandError):

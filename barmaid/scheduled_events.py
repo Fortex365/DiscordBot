@@ -98,9 +98,10 @@ class ScheduledEvents:
                 
 async def test():
     abc = await ScheduledEvents.list_guild_events(907946271946440745)
+    abc = json.dumps(abc, indent=2)
     print(abc)
     # Timestamps must be ahead of time
-    e = await ScheduledEvents.create_guild_event(907946271946440745,"This title", "This desc", "2022-08-28T23:45:00","2022-08-28T23:55:00",{"location":"doma"}, None)
+    #e = await ScheduledEvents.create_guild_event(907946271946440745,"This title", "This desc", "2022-08-28T23:45:00","2022-08-28T23:55:00",{"location":"doma"}, None)
     
     
 if __name__ == "__main__":

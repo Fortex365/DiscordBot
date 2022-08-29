@@ -425,22 +425,22 @@ async def massdm(ctx:commands.Context, *, msg:str):
         await ctx.message.delete()
         if ctx.author == owner:
             if not msg:
-                await owner.send(f"[DM-ALL] argument message was empty.")
+                await owner.send(f"[DM-ALL] argument `message` was empty.")
                 return
             server:Guild = ctx.guild
 
             if server.member_count <= S.MASSDM_EXPLOIT_LIMIT: 
                 for mem in server.members:
                     if mem == owner:
-                        await mem.send(f"[DM-ALL] what was sent to others:\n\n" +
+                        await mem.send(f"[{ctx.guild.name}] what was sent to others:\n\n" +
                                     msg)
                         continue
                     if mem.bot == True:
                         continue
                     await mem.send(msg)
                 return
-            await owner.send("[DM-ALL] Cannot sent because server member count" +
-                f"exceeded limit of {S.MASSDM_EXPLOIT_LIMIT}")
+            await owner.send("[{ctx.guild.name}] Cannot sent because server member count" +
+                f" exceeded limit of {S.MASSDM_EXPLOIT_LIMIT}")
 
 @massdm.error
 async def massdm_error(error:errors, ctx:commands.Context):
@@ -677,7 +677,79 @@ async def help(ctx:commands.Context):
                     color=S.EMBED_HELP_COMMAND_COLOR)    
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
     await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+ 
+@commands.group(invoke_without_command=True)
+@commands.guild_only()
+@commands.has_permissions(manage_messages=True)
+async def filter(ctx:commands.Context):
+    
+    if not ctx.invoked_subcommand:
+        blacklist:list = await read_db(ctx.guild.id, "blacklist")
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
 
+        if not blacklist:
+            await ctx.send(f"None are set.", delete_after=S.DELETE_COMMAND_ERROR)
+            return
+
+        blacklist_str = "\n".join(blacklist)
+        await ctx.send(f"Blacklisted words are:\n >>> {blacklist_str}", 
+                        delete_after=S.DELETE_COMMAND_INVOKE)
+  
+@filter.command()
+async def add(ctx:commands.Context, *, words:str):
+    words_each:list = words.split()
+    await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+
+    is_ok = await insert_db(ctx.guild.id, "blacklist", words_each)
+    if not is_ok:
+        is_updated = await update_db(ctx.guild.id, "blacklist", words_each)
+        if not is_updated:
+            await ctx.send(f"{words} were not added due to error.", 
+                           delete_after=S.DELETE_COMMAND_ERROR)
+            return
+    await ctx.send(f"New words have been added to the blacklist.",
+                   delete_after=S.DELETE_COMMAND_INVOKE)
+
+@filter.command()
+async def remove(ctx:commands.Context, *, words_to_del:str):
+    words:list = words_to_del.split()
+    await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+
+    current_bl:list = await read_db(ctx.guild.id, "blacklist")
+    if not current_bl:
+        await ctx.send(f"An error occured.", delete_after=S.DELETE_COMMAND_ERROR)
+        return
+    
+    for w in words:
+        for _ in current_bl:
+            if w == _:
+                try:
+                    current_bl.remove(w)
+                except ValueError as e:
+                    continue
+                
+    is_updated = await update_db(ctx.guild.id, "blacklist", current_bl)
+    if not is_updated:
+        await ctx.send(f"An error occured.", 
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        return
+    await ctx.send(f"`{words_to_del}` has been removed from blacklist.",
+                   delete_after=S.DELETE_COMMAND_INVOKE)
+     
+@filter.command()
+async def help(ctx:commands.Context):
+    """Provides help with command arguments.
+
+    Args:
+        ctx (commands.Context): Context of command invoke
+    """
+    emb = Embed(title="Help: filter",
+                description="<prefix>filter add word1 word2 ... wordn\n" \
+                    "<prefix>filter remove word1",
+                    color=S.EMBED_HELP_COMMAND_COLOR)    
+    await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
+    await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+      
 async def setup(target: commands.Bot):
     """Setup function which allows this module to be
     an extension loaded into the main file.
@@ -688,8 +760,14 @@ async def setup(target: commands.Bot):
     """
     global CLIENT
     
-    COMMANDS = [ping, clear, invoker_id, prefix, setprefix, ban, kick, echo, 
-                guid, invite, finvite, autorole, massdm, rules, setrules, move]
+    COMMANDS = [
+                ping, clear, invoker_id,
+                prefix, setprefix, ban,
+                kick, echo, guid,
+                invite, finvite, autorole, 
+                massdm, rules, setrules,
+                move, filter
+    ]
     
     for c in COMMANDS:
         target.add_command(c)

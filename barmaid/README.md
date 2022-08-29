@@ -60,9 +60,12 @@ You can modify this data to your own liking:
 - "DELETE_EMBED_HELP" - Command help message until its deletion. *Number: time in seconds.*
 - "CLIENT_ACTIVITY" - Activity bot is showing up as "Playing now". (Cannot be per server.) *String: a sequance beginning and ending with ".*
 
-# Module `error_log.py`
-# Module `json_db.py`
-# Module `utilities.py`
+# Module `events.py`
+
+List of all commands in the module:
+
+- `event` - create event into discord intergrated events
+  - `event simple` - create not integrated dc events, but embed message type
 
 # Module `admin_tools.py`
 List of all commands in this module:
@@ -84,10 +87,14 @@ List of all commands in this module:
 
   By: @user
   ```
+  - `kick more` - mentions multiple users to kick
 - `ban` - Bans the user from the server. *Permission required.*
+  - `ban more` - Bans multiple users
 - `move` - Moves all connected members from channel1 to channel2. *Permission required.*
+  - `move users` - move multiple mentioned people
   - `move help` - Gives you help for the command.
 - `massdm` - Sends direct message to all server members. *Disclaimer: owner only, small servers only.* Otherwise it would be against Discord ToS (spam, phishing).
+  - `massdm embed` - allows to send embed message
 - `rules` - Shows the server enforced rules. Rules are sent for each member who joins the server.
   - `rules set` - Set the new rules. *Permissions required.*
 - `invite` - Allows you share bot with your friends.
@@ -97,6 +104,9 @@ List of all commands in this module:
   - `autorole help` - Help for command usage.
   - `autorole set` - Set the role to asign.
   - `autorole remove` - Remove role to asign.
+- `filter` - Gets blacklisted words on a server
+  - `filter add` - adds new words to blacklist
+  - `filter remove` - removes word from blacklist
 
 
 
