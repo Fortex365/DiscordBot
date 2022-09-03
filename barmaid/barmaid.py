@@ -5,12 +5,13 @@ import logging
 from datetime import datetime
 from typing import Union
 from discord import Member, Intents, Game, Status, Reaction
-from discord import Role, Guild, Embed, Colour, User
+from discord import Role, Guild, Embed, Colour, User, Object
 from discord.message import Message
 from discord.ext import commands
 from discord.ext.commands import Context
 
 import utilities as S
+import slash_commands
 from jsonified_database import insert_db, read_db, add_guild
 from error_log import setup_logging
 
@@ -23,7 +24,8 @@ INTENTS.message_content, INTENTS.reactions = True, True
 EXTENSIONS = [
     "admin_tools",
     "minigames",
-    "events"
+    "events",
+    "slash_commands"
 ]
 
 async def get_prefix(client:commands.Bot, message:Message):
@@ -69,7 +71,7 @@ async def on_reaction_add(reaction:Reaction, who_clicked:Union[Member, User]):
 @CLIENT.event
 async def on_ready():
     """Initialization function to set some bot states, after it's bootup.
-    """
+    """    
     await CLIENT.change_presence(status=Status.idle,
         activity=Game(name=S.CLIENT_ACTIVITY, start=datetime.now()))
     print("Online.")
@@ -184,7 +186,8 @@ async def on_command_error(ctx:Context, error:commands.CommandError):
         error (CommandError): Error instance
     """
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send(f"{error}", delete_after=S.DELETE_COMMAND_ERROR)
+        await ctx.send(f"{error}", delete_after=S.DELETE_COMMAND_ERROR,
+                       ephemeral=True)
         await ctx.message.delete()
         return
     elif isinstance(error, commands.CommandInvokeError):
@@ -196,6 +199,11 @@ async def on_command_error(ctx:Context, error:commands.CommandError):
 async def on_message_error(ctx:Context, error):
     raise error
 
+@CLIENT.event
+async def setup_hook():
+    await CLIENT.tree.sync()
+    print(f"hybrid commands synced")
+
 async def install_extensions(target:commands.Bot):
     """Install all the extentions in the other files to the client.
 
@@ -203,7 +211,8 @@ async def install_extensions(target:commands.Bot):
         client (commands.Bot): Instance of the bot itself.
     """
     for ext in EXTENSIONS:
-        await target.load_extension(ext) 
+        await target.load_extension(ext)
+        
     
 if __name__ == "__main__":
     """This is main module and only one to be executed."""

@@ -72,7 +72,7 @@ List of all commands in this module:
 
 - `ping` - Outputs the ping between the client and the server.
 - `clear` - Clears the number of messages in the channel. *Permission required.*
-- `invoker_id` Sends the discord member number identificator to direct message. *Permission required.*
+- `id` Sends the discord member number identificator to direct message. *Permission required.*
 - `echo` - Echoes the message.
 - `guid` - Sends guild identification number to direct message. *Permission required.*
 - `prefix` - Responds with the current prefix is set on the server.

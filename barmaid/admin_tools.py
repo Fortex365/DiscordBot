@@ -12,7 +12,8 @@ from barmaid import CLIENT
 
 MICROSECONDS_TO_MILISECONDS = 1000
 
-@commands.command(aliases=["pong","ping!","pong!","latency"])
+@commands.hybrid_command(name="ping", aliases=["pong","ping!","pong!","latency"],
+                         with_app_command=True)
 @commands.guild_only()
 async def ping(ctx:commands.Context):
     """Outputs the ping between the client and the server.
@@ -20,11 +21,11 @@ async def ping(ctx:commands.Context):
     Args:
         ctx: Current context of the message that invoked the command.
     """
-    if ctx.message.guild: 
+    if not ctx.interaction: 
       await ctx.message.delete()
-      await ctx.send(
+    await ctx.send(
           f"Pong! Latency: {round(CLIENT.latency*MICROSECONDS_TO_MILISECONDS)} miliseconds.",
-          tts=True, delete_after=S.DELETE_COMMAND_INVOKE)
+          delete_after=S.DELETE_COMMAND_INVOKE, ephemeral=True)
       
 @commands.command(aliases=["clr","delmsgs","delmsg"])
 @commands.guild_only()
@@ -60,7 +61,7 @@ async def clear_error(error:errors, ctx:commands.Context):
         return
     raise error
     
-@commands.command()
+@commands.command(aliases=["id"])
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
 async def invoker_id(ctx:commands.Context):
@@ -98,7 +99,7 @@ async def echo(ctx:commands.Context, *, message:str = None):
         await ctx.message.delete()
     await ctx.send(message, delete_after=S.DELETE_COMMAND_INVOKE)
     
-@commands.command()
+@commands.command(aliases=["guildid", "gid"])
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
 async def guid(ctx:commands.Context):
@@ -107,8 +108,8 @@ async def guid(ctx:commands.Context):
     Args:
         ctx: Context deducted from invocation.
     """
-    guid = ctx.guild.id
-    await ctx.message.author.send(f"{guid = }")
+    server_id = ctx.guild.id
+    await ctx.message.author.send(f"{server_id = }")
     
 @guid.error
 async def guid_error(error:errors, ctx:commands.Context):
@@ -500,7 +501,7 @@ async def rules(ctx:commands.Context):
         await ctx.send(guild_rules, delete_after=S.DELETE_MINUTE)
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         return
-    await ctx.send("Error. No rules have been set yet.", delete_after=S.DELETE_COMMAND_ERROR)
+    await ctx.send("No rules have been set yet.", delete_after=S.DELETE_COMMAND_ERROR)
     await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
 @commands.command()
@@ -552,7 +553,7 @@ async def invite(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
-    INVITE_URL = "https://discord.com/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands"
+    INVITE_URL = "https://discord.com/api/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands"
     msg = Embed(title="Invitation link [Bot]", description=INVITE_URL)
     await ctx.send(embed=msg,
                    delete_after=S.DELETE_MINUTE)
@@ -704,8 +705,7 @@ async def add(ctx:commands.Context, *, words:str):
     if not is_ok:
         is_updated = await update_db(ctx.guild.id, "blacklist", words_each)
         if not is_updated:
-            await ctx.send(f"{words} were not added due to error.", 
-                           delete_after=S.DELETE_COMMAND_ERROR)
+            await database_fail(ctx)
             return
     await ctx.send(f"New words have been added to the blacklist.",
                    delete_after=S.DELETE_COMMAND_INVOKE)
@@ -717,7 +717,7 @@ async def remove(ctx:commands.Context, *, words_to_del:str):
 
     current_bl:list = await read_db(ctx.guild.id, "blacklist")
     if not current_bl:
-        await ctx.send(f"An error occured.", delete_after=S.DELETE_COMMAND_ERROR)
+        await ctx.send(f"Looks like none were ever set.", delete_after=S.DELETE_COMMAND_ERROR)
         return
     
     for w in words:
@@ -730,8 +730,7 @@ async def remove(ctx:commands.Context, *, words_to_del:str):
                 
     is_updated = await update_db(ctx.guild.id, "blacklist", current_bl)
     if not is_updated:
-        await ctx.send(f"An error occured.", 
-                       delete_after=S.DELETE_COMMAND_ERROR)
+        await database_fail(ctx)
         return
     await ctx.send(f"`{words_to_del}` has been removed from blacklist.",
                    delete_after=S.DELETE_COMMAND_INVOKE)
@@ -780,5 +779,4 @@ if __name__ == "__main__":
 
 """
 TO DO:
-filter banwords
 """

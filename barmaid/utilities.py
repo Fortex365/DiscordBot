@@ -45,7 +45,8 @@ async def database_fail(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context to send message to.
     """
-    await ctx.send("Oops. Something's wrong.", delete_after=DELETE_COMMAND_ERROR)
+    await ctx.send("An error occured. Try again.",
+                   delete_after=DELETE_COMMAND_ERROR)
 
 if __name__ == "__main__":
     """In case of trying to execute this module, nothing should happen.
