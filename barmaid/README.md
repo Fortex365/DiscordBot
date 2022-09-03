@@ -8,7 +8,8 @@ Also if you hate how command invocation messages and some responses are left in 
 [:envelope: Invitation](https://discord.com/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands)
 
 ## Code asignment [CZ]:
-```Student napíše Bota pro komunikační platformu Discord, v programovacím jazyce Python.
+```
+Student napíše Bota pro komunikační platformu Discord, v programovacím jazyce Python.
 Student zároveň s tím vyřeší požadavek na hosting Bota pro jej nepřetržitý provoz.
 Bot by měl sloužit k obecným potřebám různorodých komunit využívající tuto platformu, 
 např. Bot bude zprostředkovávat vytváření a plánování eventů pro uživatele komunity a jejich účasti 
