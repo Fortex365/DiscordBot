@@ -1,6 +1,9 @@
+import re
 import string
 import discord
+from typing import Optional
 from discord import Embed, Member, channel, Invite, Role, Guild, VoiceChannel
+from discord import Interaction, SelectOption, File, Button
 from discord.ext import commands
 from discord.ext.commands import errors
 
@@ -10,113 +13,159 @@ from jsonified_database import delete_from_db, insert_db, read_db, update_db
 
 from barmaid import CLIENT
 
-MICROSECONDS_TO_MILISECONDS = 1000
-
-@commands.hybrid_command(name="ping", aliases=["pong","ping!","pong!","latency"],
+@commands.hybrid_command(name="ping",
+                         aliases=["pong","ping!","pong!","latency"],
                          with_app_command=True)
 @commands.guild_only()
 async def ping(ctx:commands.Context):
-    """Outputs the ping between the client and the server.
+    """Latency between bot and discord.
 
     Args:
         ctx: Current context of the message that invoked the command.
     """
+    MICROSECONDS_TO_MILISECONDS = 1000
+
+    await ctx.defer(ephemeral=True)
+    
+    await ctx.send(
+          "Pong! Latency: " \
+              f"{round(CLIENT.latency*MICROSECONDS_TO_MILISECONDS)} " \
+                  "miliseconds",
+          delete_after=S.DELETE_COMMAND_INVOKE)
+    
     if not ctx.interaction: 
       await ctx.message.delete()
-    await ctx.send(
-          f"Pong! Latency: {round(CLIENT.latency*MICROSECONDS_TO_MILISECONDS)} miliseconds.",
-          delete_after=S.DELETE_COMMAND_INVOKE, ephemeral=True)
       
-@commands.command(aliases=["clr","delmsgs","delmsg"])
+@commands.hybrid_command(name="clear",
+                         aliases=["clr","delmsgs","delmsg"],
+                         with_app_command=True)
 @commands.guild_only()
 @commands.has_permissions(manage_messages=True)
-async def clear(ctx:commands.Context, amount:int = 1):
-    """Clears the number of messages in the channel where it was invoked.
+async def clear(ctx:commands.Context, amount:int=1):
+    """Removes any number of messages in chat history.
 
     Args:
         ctx: Current context of the message that invoked the command.
-        amount (optional): Number of messages to be deleted to,
-        excluding the invoked command itself. Defaults to 1.
+        amount (optional): Number of messages to delete.
     """
+    # If invoked via slash commands, no need to purge invoke itself.
+    if not ctx.interaction:
+        amount += 1
+    
+    await ctx.defer(ephemeral=True)    
     if amount > 0:
-        await ctx.channel.purge(limit=amount+1)
+        await ctx.channel.purge(limit=amount)
+        amount = amount - 1 if not ctx.interaction else amount
+        await ctx.send(content=f"Cleared `{amount}` message(s)",
+                       delete_after=S.DELETE_COMMAND_INVOKE)
     else:
-        await ctx.send(f"Error! Amount of messages to be deleted has" \
-            " to be positive number.",  delete_after=S.DELETE_COMMAND_ERROR)
+        await ctx.send(f"Amount of messages to be deleted has" \
+            " to be a positive number",
+            delete_after=S.DELETE_COMMAND_ERROR)
         
 @clear.error
-async def clear_error(error:errors, ctx:commands.Context):
+async def clear_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)    
+
+    # Bot missing permissions
     if isinstance(error, discord.Forbidden):
-        await ctx.send(f"{CLIENT} missing permission `manage_messages`", 
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
-    elif isinstance(error, discord.HTTPException):
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
+        await ctx.send(f"{CLIENT} missing permissions `Manage Messages`",
+                        delete_after=S.DELETE_COMMAND_ERROR)
+    # User missing permission
     elif isinstance(error, commands.MissingPermissions):
-        await ctx.send(f"{ctx.author} missing permission `manage_messages`", 
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
-    raise error
+        await ctx.send(error, delete_after=S.DELETE_COMMAND_ERROR)
     
-@commands.command(aliases=["id"])
-@commands.guild_only()
-@commands.has_permissions(administrator=True)
-async def invoker_id(ctx:commands.Context):
-    """Sends the id discord representation of author's message into his DMs.
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
+    
+@commands.hybrid_command(name="id",
+                         with_app_command=True)
+async def id(ctx:commands.Context):
+    """Sends your discord identificator number.
     
     Args:
     ctx: Current context of the message that invoked the command.
     """
     id = ctx.message.author.id
-    if ctx.message.guild:
-        await ctx.message.delete()
-    await ctx.message.author.send(id)
-
-@invoker_id.error
-async def invoker_id_error(error:errors, ctx:commands.Context):
-    if isinstance(error, commands.MissingPermissions):
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+    await ctx.defer(ephemeral=True)
+    
+    if not ctx.interaction:
+        if ctx.message.guild:
+            await ctx.message.delete()
+        await ctx.message.author.send(id)
         return
-    raise error
+    await ctx.send(id)
 
-@commands.command()
-async def echo(ctx:commands.Context, *, message:str = None):
+@id.error
+async def invoker_id_error(ctx:commands.Context, error:errors,):
+    await ctx.defer(ephemeral=True)
+    
+    await ctx.send(error,
+                   delete_after=S.DELETE_COMMAND_ERROR)
+        
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
+
+@commands.hybrid_command(name="echo",
+                         aliases=["repeat"],
+                         with_app_command=True)
+async def echo(ctx:commands.Context, *, message:str=None):
     """Echoes the message the command is invoked with.
 
     Args:
         ctx: Context of the invoked command.
         message: Message to be repeated.
     """
-    if message is None:
-        await ctx.send(f"Error! Argument {message=}",
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
-    if ctx.guild:
-        await ctx.message.delete()
-    await ctx.send(message, delete_after=S.DELETE_COMMAND_INVOKE)
     
-@commands.command(aliases=["guildid", "gid"])
+    if not message:
+        raise commands.CommandError(f"Argument message cannot be empty. Was `{message}`")
+    
+    await ctx.defer(ephemeral=True)
+    if ctx.guild and not ctx.interaction:
+        await ctx.message.delete()
+    await ctx.send(message,
+                   delete_after=S.DELETE_COMMAND_INVOKE)
+
+@echo.error
+async def echo_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
+    
+    if isinstance(error, commands.CommandError):
+        await ctx.send(error,
+                       delete_after=S.DELETE_COMMAND_ERROR)
+    
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
+    
+@commands.hybrid_command(name="guid",
+                         aliases=["guildid", "gid"],
+                         with_app_command=True)
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
 async def guid(ctx:commands.Context):
-    """Sends the guild id from context to the invoker into DMs.
+    """Sends your discord server id identificator number.
 
     Args:
         ctx: Context deducted from invocation.
     """
     server_id = ctx.guild.id
-    await ctx.message.author.send(f"{server_id = }")
-    
-@guid.error
-async def guid_error(error:errors, ctx:commands.Context):
-    if isinstance(error, commands.MissingPermissions):
+    await ctx.defer(ephemeral=True)
+    if not ctx.interaction:
+        await ctx.message.author.send(f"{server_id = }")
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         return
-    raise error
+    await ctx.send(f"{server_id = }")
+    
+@guid.error
+async def guid_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
+    
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(error,
+                       delete_after=S.DELETE_COMMAND_ERROR)
+  
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
 
 def _check_prefix(prefix:str):
     """Checks if input string is valid prefix.
@@ -134,129 +183,135 @@ def _check_prefix(prefix:str):
     
     if prefix == S.DEFAULT_SERVER_PREFIX:
         return prefix
+    
     if (len(prefix) > 1) or (not prefix in SYMBOLS):
-        raise ValueError(f"Prefix cannot have more than one special symbol {prefix=}")
+        return False
     return prefix
 
-@commands.command(invoke_without_command=True)
+@commands.hybrid_command(name="prefix",
+                         with_app_command=True)
 @commands.guild_only()
 async def prefix(ctx:commands.Context):
-    """Responds with prefix on current server (guild).
+    """Prefix used in discord server.
 
     Args:
         ctx (commands.Context): Context of command invocation
     """
+    await ctx.defer(ephemeral=True)
+    
     prefix = await read_db(ctx.guild.id, "prefix")
     if not prefix:
         await database_fail(ctx)
         return
     
-    if ctx.invoked_subcommand:
-        return
     await ctx.send(f"Current bot prefix is set to `{prefix}` symbol.", 
                    delete_after=S.DELETE_COMMAND_INVOKE)
-    await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+    
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
 
-@commands.command(aliases=["prefixset"])
+@prefix.error
+async def prefix_error(ctx:commands.Context, error:errors):
+    await ctx.send(error,
+                   delete_after=S.DELETE_COMMAND_ERROR)
+    
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
+
+@commands.hybrid_command(name="setprefix",
+                         aliases=["prefixset"],
+                         with_app_command=True)
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
 async def setprefix(ctx:commands.Context, new_prefix:str=None):
-    """Sets new prefix for current server.
+    """Sets new prefix for discord server.
 
     Args:
         ctx (commands.Context): Context of command invocation
-        new_prefix (str, optional): New prefix to be set. Defaults to None.
+        new_prefix (str, optional): Symbol to be the new prefix.
     """
     SYMBOLS = string.punctuation
     
     if not new_prefix:
-        await ctx.send(f"Error! Prefix cannot be empty.", 
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
-
-    try:
-        _check_prefix(new_prefix)
-    except ValueError:
-        await ctx.send(f"Oops. Prefix can only be one of special characters " +
-                       f"like {SYMBOLS}", delete_after=S.DELETE_COMMAND_ERROR)
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
+        raise commands.CommandError(f"Argument new_prefix cannot be empty. Was `{new_prefix}`")
     
+    if not _check_prefix(new_prefix):
+        raise commands.CommandError("Prefix cannot have more than one special symbol. " \
+            f"Allowed symbols are:\n > {SYMBOLS}")
+
+    await ctx.defer(ephemeral=True)
     if not await update_db(ctx.guild.id, 'prefix', new_prefix):
-        await ctx.send(f"Oops. Something internally went wrong with sending the data.",
-                       delete_after=S.DELETE_COMMAND_ERROR)
+        await database_fail(ctx)
+    else:
+        await ctx.send(f"Prefix was set to `{new_prefix}` successfully.", 
+                    delete_after=S.DELETE_COMMAND_INVOKE)
+        
+    if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
-    await ctx.send(f"Prefix was set to `{new_prefix}` successfully.", 
-                   delete_after=S.DELETE_COMMAND_INVOKE)
-    await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
 
 @setprefix.error
-async def setprefix_error(error:errors, ctx:commands.Context):
-    if isinstance(error, commands.MissingPermissions):
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
-    raise error
-          
-@commands.group(invoke_without_command=True)
+async def setprefix_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
+    
+    if isinstance(error, commands.CommandError):
+        await ctx.send(error,
+                       delete_after=S.DELETE_COMMAND_ERROR)
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send(error,
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR) 
+        
+@commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
 @commands.has_permissions(kick_members = True)
-async def kick(ctx:commands.Context, user: Member, *, reason="No reason provided"):
-    """Kicks the user from the server deducted from the context.
-
-    Args:
-        ctx (discord.Context): Context of the invoked command.
-        user (discord.Member): Mentioned discord member
-        reason (str, optional): Reason why user was kicked from server.
-        Defaults to "No reason provided".
-    """
-    if not ctx.invoked_subcommand:
-        
-        # Member-side
-        kick = Embed(title=f"Kicked {user}!", description=f"Reason: {reason}")
-        kick.set_footer(text=f"By: {ctx.author}")
-        await user.kick(reason=reason)    
-        await user.send(embed=kick)
-        
-        # Server-side
-        await ctx.message.delete()
-        kick = Embed(title=f"Kicked {user}!", description=f"Reason: {reason}")
-        kick.set_footer(text=f"By: {ctx.author}")
-        await ctx.channel.send(embed=kick, delete_after=S.DELETE_DAY)     
-
-@kick.command()
-async def more(ctx:commands.Context, members:commands.Greedy[Member]=None,
-               *, reason:str="No reason provided"):
-    """Subcommand of ban to allow kick multiple users.
+async def kick(ctx:commands.Context,
+                   members:commands.Greedy[Member]=None, *,
+                   reason:str="No reason provided"):
+    """Kicks multiple users from discord server.
 
     Args:
         ctx (commands.Context): Context of command invocation
-        members (commands.Greedy[Member], optional): List of mentioned members.
+        members (commands.Greedy[Member], optional): Multiple mentioned members
         Defaults to None.
-        reason (str, optional): Reason why kicked. Defaults to "No reason provided".
+        reason (str, optional): Anything they did wrong
     """
     if not members:
-        await ctx.send(f"Error! No people to kick",
-                        delete_after=S.DELETE_COMMAND_ERROR)
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        return
-    
-    for member in members:
-        # Member-side
-        kick = Embed(title=f"Kicked {member}!", description=f"Reason: {reason}")
-        kick.set_footer(text=f"By: {ctx.author}")
-        await member.kick(reason=reason)
-        await member.send(embed=kick)
+        raise commands.CommandError("No people to perform kick operation.")
 
-    # Server-side
-    await ctx.message.delete()
-    kick = Embed(title=f"Kicked {members}!", description=f"Reason: {reason}")
+    names = [mem.name for mem in members]
+    names_str = ", ".join(names) if len(names) > 1 else names[0]
+    
+    # Server-side      
+    kick = Embed(title=f"Kicked {names_str}!", description=f"Reason: {reason}")
     kick.set_footer(text=f"By: {ctx.author}")
-    await ctx.send(embed=kick, delete_after=S.DELETE_DAY)
+    await ctx.channel.send(embed=kick,
+                   delete_after=S.DELETE_DAY)
+    
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+        
+    # Member-side
+    for member in members:
+        kick = Embed(title=f"You were kicked from {ctx.guild.name}",
+                     description=f"Reason: {reason}")
+        kick.set_footer(text=f"By: {ctx.author}")
+        # Send can fail, because member can block DM's from server members.
+        try:
+            await member.send(embed=kick)
+        except discord.Forbidden:
+            # We still want to kick that member
+            await member.kick(reason=reason)
+            continue
+        await member.kick(reason=reason)
+    # App response
+    await ctx.defer(ephemeral=True)
+    await ctx.send("Success!", 
+                   delete_after=S.DELETE_COMMAND_INVOKE)
 
 @kick.error
-async def kick_error(error:errors, ctx:commands.Context):
+async def kick_error(ctx:commands.Context, error:errors):
     """Informs server owner deducted from context about who tried
     to perform an kick operation without permissions.
 
@@ -267,11 +322,20 @@ async def kick_error(error:errors, ctx:commands.Context):
     if isinstance(error, commands.MissingPermissions):
         owner = ctx.guild.owner
         direct_message = await owner.create_dm()
-    
-        await direct_message.send(
-            f"Missing permissions `kick_members`: {ctx.message.author}")
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    raise error
+        await direct_message.send(f"{ctx.message.author} performed " \
+            "kick operation, but misses permission Kick Members.")
+        await ctx.defer(ephemeral=True)
+        await ctx.send(error)
+        if not ctx.interaction:
+            await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
+        return
+
+    await ctx.defer(ephemeral=True)
+    await ctx.send(error,
+                delete_after=S.DELETE_COMMAND_ERROR)
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
+    return
       
 @commands.group(invoke_without_command=True)
 @commands.guild_only()
@@ -562,7 +626,9 @@ async def invite(ctx:commands.Context):
 @commands.guild_only()
 @commands.group(invoke_without_command=True,
                 aliases=["invitef", "invitefriend", "finv", "invf"])
-async def finvite(ctx:commands.Context, kick_after_dc:bool=False, age:int=0,
+async def finvite(ctx:commands.Context,
+                  kick_after_dc:bool=False,
+                  age:int=0,
                   use:int=0):
     """Generates new server invite for your friends.
 
@@ -575,7 +641,7 @@ async def finvite(ctx:commands.Context, kick_after_dc:bool=False, age:int=0,
     """
     if not ctx.invoked_subcommand:
         ch:channel.TextChannel = ctx.channel
-        invite:Invite = await ch.create_invite(temporary=kick_after_dc, max_use=use,
+        invite:Invite = await ch.create_invite(temporary=kick_after_dc, max_uses=use,
                                     max_age=age)
         embd = Embed(title="Invitation link [Server]", description=invite.url)
         await ctx.send(embed=embd, delete_after=S.DELETE_MINUTE)
@@ -760,7 +826,7 @@ async def setup(target: commands.Bot):
     global CLIENT
     
     COMMANDS = [
-                ping, clear, invoker_id,
+                ping, clear, id,
                 prefix, setprefix, ban,
                 kick, echo, guid,
                 invite, finvite, autorole, 

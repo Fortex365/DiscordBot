@@ -4,14 +4,13 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Union
-from discord import Member, Intents, Game, Status, Reaction
-from discord import Role, Guild, Embed, Colour, User, Object
+from discord import Member, Intents, Game, Status, Reaction, app_commands
+from discord import Role, Guild, Embed, Colour, User, Object, Interaction
 from discord.message import Message
 from discord.ext import commands
 from discord.ext.commands import Context
 
 import utilities as S
-import slash_commands
 from jsonified_database import insert_db, read_db, add_guild
 from error_log import setup_logging
 
@@ -25,7 +24,6 @@ EXTENSIONS = [
     "admin_tools",
     "minigames",
     "events",
-    "slash_commands"
 ]
 
 async def get_prefix(client:commands.Bot, message:Message):
@@ -52,6 +50,7 @@ async def get_prefix(client:commands.Bot, message:Message):
 
 # Client has to be top level variable because of @ decorator 
 CLIENT = commands.Bot(command_prefix=get_prefix, intents=INTENTS)
+TREE = CLIENT.tree
 
 # Log handler
 log_handle:logging.Logger = setup_logging()
@@ -186,23 +185,17 @@ async def on_command_error(ctx:Context, error:commands.CommandError):
         error (CommandError): Error instance
     """
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send(f"{error}", delete_after=S.DELETE_COMMAND_ERROR,
-                       ephemeral=True)
-        await ctx.message.delete()
-        return
-    elif isinstance(error, commands.CommandInvokeError):
-        raise error
-        #return
-    raise error
-    
+        await ctx.send(error, ephemeral=True)
+   
 @CLIENT.event
 async def on_message_error(ctx:Context, error):
-    raise error
+    pass
 
 @CLIENT.event
 async def setup_hook():
     await CLIENT.tree.sync()
-    print(f"hybrid commands synced")
+    print(f"In-app commands have been synchronized.")
+
 
 async def install_extensions(target:commands.Bot):
     """Install all the extentions in the other files to the client.
@@ -213,7 +206,6 @@ async def install_extensions(target:commands.Bot):
     for ext in EXTENSIONS:
         await target.load_extension(ext)
         
-    
 if __name__ == "__main__":
     """This is main module and only one to be executed."""
     
