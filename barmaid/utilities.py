@@ -3,16 +3,23 @@ from discord import Colour
 from discord.ext import commands
 
 HOURS_TO_DAY=24
+CONFIG_FILE_NAME = "config.json"
+READ_MODE = "r"
 
-# PREFIX
+"""
+Server default prefix symbol
+"""
 DEFAULT_SERVER_PREFIX = ".."
 
-# MESSAGES SETTINGS
+"""
+Message settings
+"""
 try:
-        with open("config.json", "r") as f:
-                serialized = json.load(f)
+    with open(CONFIG_FILE_NAME, READ_MODE) as f:
+        serialized = json.load(f)
 except OSError:
         pass
+
 msg_stngs = serialized['DeleteMessages']      
 DELETE_HOUR = 3600 
 DELETE_MINUTE = 60
@@ -23,13 +30,26 @@ DELETE_EMBED_POST = msg_stngs['DELETE_EMBED_POST']
 DELETE_EMBED_HELP = msg_stngs['DELETE_EMBED_HELP']
 EMBED_HELP_COMMAND_COLOR = Colour.blue()
 
-# ACTIVITY
+"""
+Activity settings
+"""
 act_stngs = serialized['Activity']
 CLIENT_ACTIVITY = act_stngs['CLIENT_ACTIVITY']  
 
-# EXPLOIT PREVENTION
+"""
+Security settings
+"""
 MASSDM_EXPLOIT_LIMIT = 200
 
+"""
+Bot related stuff
+"""
+BOT_INVITE_URL = "https://discord.com/api/oauth2/authorize?client_id=" \
+    "821538075078557707&permissions=8&scope=bot%20applications.commands"
+
+"""
+Utility functions
+"""
 async def delete_command_user_invoke(ctx:commands.Context, time:int):
     """Some time after command invocation has passed, the invoker's command message will be deleted.
 

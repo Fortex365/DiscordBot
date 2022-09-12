@@ -159,13 +159,5 @@ async def add_guild(guid:int) -> str:
     result = await flush_file(to_save)
     return result
 
-async def test():
-    pass
-       
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(test())
-
-"""
-TO-DO
-"""    
+    pass
