@@ -2,12 +2,13 @@ import asyncio
 import json
 import aiofiles
 
-DATABASE_NAME = "data.json"
+DATABASE = "data.json"
+
 READ_FLAG = "r"
 WRITE_FLAG = "w"
 READ_WRITE_FLAG = "rw"
 
-async def open_file() -> dict:
+async def open_file(file_name:str) -> dict:
     """Opens json file and returns it as dict object.
 
     Raises:
@@ -17,14 +18,15 @@ async def open_file() -> dict:
         dict: Dict made out of json file
     """
     try:
-        async with aiofiles.open(DATABASE_NAME, READ_FLAG) as f:
+        async with aiofiles.open(file_name, READ_FLAG) as f:
             contents = await f.read()
             json_as_dict = json.loads(contents)
     except OSError as e:
+        # logging add(e)
         raise OSError(e)
     return json_as_dict
 
-async def flush_file(data:dict) -> str:
+async def flush_file(file_name:str, data:dict) -> str:
     """Flushes dict obj into json file
 
     Args:
@@ -37,38 +39,59 @@ async def flush_file(data:dict) -> str:
         str: String that was flushed
     """
     try:
-        async with aiofiles.open(DATABASE_NAME, WRITE_FLAG) as f:
+        async with aiofiles.open(file_name, WRITE_FLAG) as f:
             await f.write(data)
             return data
     except OSError as e:
+        # logging add(e)
         raise OSError(e)
-
-async def read_db(guid:int, key:str):
+    
+async def read_db(file_name:str, id:int, key:str):
     """Reads the value corresponding by key in the database by given
-    guild id (guid) searched by.
+     id (guild | member) searched by.
 
     Args:
-        guid (int): Guild id searched by.
+        id (int): Guild or member id searched by.
         key (str): Any key value we search for.
 
     Returns:
-        (any | False): Corresponding value to the key, or False if wasn't found any. 
+        (any | None): Corresponding value to the key, or None if wasn't found any. 
     """   
-    guild_str = str(guid)
+    id_str = str(id)
     
-    data = await open_file()
+    data = await open_file(file_name)
     try:
-        value_by_key = data[guild_str][key]
+        value_by_key = data[id_str][key]
         return value_by_key
     except KeyError as e:
-        return False
-
-async def update_db(guid:int, key:str, new_value):
-    """Updates existing key-pair in the database stored by guild id (guid).
-    If no such key exists, you cannot update it, and returns None.
+        return None
+    
+async def read_id(file_name:str, id:int):
+    """Reads all corresponding data to id in specified database
 
     Args:
-        guid (int): Guild id in the database.
+        file_name (str): Json file
+        id (int): Id of guild or member
+
+    Returns:
+        any | None: Data found (can can list, dict, int etc.) or None if doesnt
+        exists.
+    """
+    id_str = str(id)
+    
+    data = await open_file(file_name)
+    try:
+        value_by_key = data[id_str]
+        return value_by_key
+    except KeyError as e:
+        return None
+
+async def update_db(file_name:str, id:int, key:str, new_value):
+    """Updates existing key-pair in the database stored by id (guild | member).
+    If no such key exists, the key is added and asigned with new_value.
+
+    Args:
+        id (int): Guild or member id in the database.
         key (str): Key which we update.
         new_value (any): New value to the key.
         
@@ -79,22 +102,22 @@ async def update_db(guid:int, key:str, new_value):
         (str | None): Returns the updated database as string, or None
         if key failed.
     """
-    guid_str = str(guid)
+    id_str = str(id)
     
-    data = await open_file()
+    data = await open_file(file_name)
     try:
-        if not await read_db(guid, key):
-            return None
-        data[guid_str][key] = new_value
+#        if not await read_db(file_name, id, key):
+#            return None
+        data[id_str][key] = new_value
     except KeyError:
         return None
     
     new_data = json.dumps(data, indent=2)
     
-    result = await flush_file(new_data)
+    result = await flush_file(file_name, new_data)
     return result
     
-async def insert_db(guid:int, key:str, value) -> str:
+async def insert_db(file_name:str, id:int, key:str, value) -> str:
     """Inserts new key into the database with its value.
     If key already exists, returns None.
     
@@ -105,59 +128,82 @@ async def insert_db(guid:int, key:str, value) -> str:
         
     Returns:
         (str | None): Returns updated database as string or None, 
-        if you key already existed.
+        if your key already existed.
     """
-    guid_str = str(guid)
+    id_str = str(id)
     
-    if await read_db(guid, key):
+    if await read_db(file_name, id, key):
         return None
     
-    data = await open_file()
-    data[guid_str][key] = value
+    data = await open_file(file_name)
+    data[id_str][key] = value
     to_save = json.dumps(data, indent=2)
     
-    result = await flush_file(to_save)
+    result = await flush_file(file_name, to_save)
     return result
 
-async def delete_from_db(guid:int, key:str) -> str:
-    """Deletes existing key-pair in server's dictionary.
+async def delete_from_db(file_name:str, id:int, key:str) -> str:
+    """Deletes existing key-pair in json file. When nothing to delete, 
+    returns None.
 
     Args:
-        guid (int): Guild id that dict belongs to.
+        id (int): Guild or member id that dict belongs to.
         key (str): Key to delete with its value.
 
     Returns:
-       str: Guild dict (as str) after deletion.
+       str: data.json or naughty_list.json (as str) after deletion.
     """
-    guid_str = str(guid)
+    id_str = str(id)
+    skip_del = False
     
-    if not await read_db(guid, key):
-        return None
+    if not await read_db(file_name, id, key):
+        skip_del = True
     
-    data = await open_file()
-    del data[guid_str][key]
+    data = await open_file(file_name)
+    if not skip_del:
+        del data[id_str][key]
     to_save = json.dumps(data, indent=2)
-    
-    result = await flush_file(to_save)
-    return result  
+    if skip_del:
+        return to_save
+    result = await flush_file(file_name, to_save)
+    return result
 
-async def add_guild(guid:int) -> str:
-    """Adds new guild into database.
+async def add_id(file_name:str, id:int) -> str:
+    """Adds new id into database.
 
     Args:
-        guid (int): Guild id to add.
+        id (int): Guild or member id to add.
 
     Returns:
         str: New json database
     """
-    guid_str = str(guid)
+    id_str = str(id)
     
-    data = await open_file()
-    data[guid_str] = {}
+    data = await open_file(file_name)
+    data[id_str] = {}
     to_save = json.dumps(data, indent=2)
     
-    result = await flush_file(to_save)
+    result = await flush_file(file_name, to_save)
     return result
+
+async def id_lookup(file_name:str, id:int) -> int:
+    """Looks up for id in the specified json.
+
+    Args:
+        file_name (str): Json file
+        id (int): Id to search for
+
+    Returns:
+        int: If id was found, else None
+    """
+    id_str = str(id)
+    
+    data = await open_file(file_name)
+    try:
+        result = data[id_str]
+    except KeyError as e:
+        return None
+    return id
 
 if __name__ == "__main__":
     pass

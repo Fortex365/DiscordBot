@@ -11,7 +11,7 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 import utilities as S
-from jsonified_database import insert_db, read_db, add_guild
+from jsonified_database import id_lookup, insert_db, read_db, add_id, read_id
 from error_log import setup_logging
 
 # Intents manages some level of permissions bot can do
@@ -25,6 +25,9 @@ EXTENSIONS = [
     "minigames",
     "events",
 ]
+
+DATABASE = "data.json"
+NAUGHTY = "naughty_list.json"
 
 async def get_prefix(client:commands.Bot, message:Message):
     """Retrieves the prefix corresponding to a server if set,
@@ -40,9 +43,9 @@ async def get_prefix(client:commands.Bot, message:Message):
     if not message.guild:
         return commands.when_mentioned_or(S.DEFAULT_SERVER_PREFIX)(client, message)
     
-    prefix = await read_db(message.guild.id, 'prefix')
+    prefix = await read_db(DATABASE, message.guild.id, 'prefix')
     if not prefix:
-        is_okay = await insert_db(message.guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
+        is_okay = await insert_db(DATABASE, message.guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
         if not is_okay:
             return
         prefix = S.DEFAULT_SERVER_PREFIX
@@ -82,9 +85,9 @@ async def on_guild_join(guild:Guild):
     Args:
         guild (Guild): Guild bot joined in
     """
-    success = await add_guild(guild.id)
+    success = await add_id(guild.id)
     while not success:
-        success = await add_guild(guild.id)
+        success = await add_id(guild.id)
 
 @CLIENT.event
 async def on_member_join(member:Member):
@@ -95,14 +98,28 @@ async def on_member_join(member:Member):
         member (Member): Member who joined server
     """
     # Auto-asign role given by guild
-    role_asigned_by_guild:int = await read_db(member.guild.id, "auto-role")
+    role_asigned_by_guild:int = await read_db(DATABASE, member.guild.id, "auto-role")
     member_guild:Guild = member.guild
     if role_asigned_by_guild:
-        role_to_give:Role = member_guild.get_role(role_id=role_asigned_by_guild)
+        role_to_give:Role = member_guild.get_role(role_asigned_by_guild)
         await member.add_roles(role_to_give)
     
     # Auto-rules given by guild
     await send_guild_rules(member, member_guild)
+    # Aware moderators of naughty member join
+    if await check_if_naughty(member):
+        await aware_of_naughty(member, member_guild)
+    
+async def aware_of_naughty(member:Member, guild:Guild):
+    mods_id = await read_db(DATABASE, guild.id, "mods_to_notify")
+    mods = [guild.get_member(id) for id in mods_id]
+    naughty = await read_id(NAUGHTY, member.id)
+    naugty_items = naughty.items()
+    
+    for m in mods:
+        await m.send(f"{member} joined {guild.name} with `{len(naugty_items)}` " +
+               "naughty records.\nUse `/naughty @mention` on your server " +
+               "to see more information")
     
 async def send_guild_rules(member:Member, guild_joined:Guild):
     """For newly joined member on a server, bot sends this user server specified
@@ -112,10 +129,14 @@ async def send_guild_rules(member:Member, guild_joined:Guild):
         member (Member): Member who joined
         guild_joined (Guild): Guild which member joined
     """
-    guild_rules = await read_db(guild_joined.id, "guild-rules")
+    guild_rules:dict = await read_db(DATABASE, guild_joined.id, "guild-rules")
     if guild_rules:
+        result:list = []      
+        for idx, rule in guild_rules.items():
+            result.append(f"{int(idx)+1}) " + rule)
+        formated_output = "\n".join(result)
         emb = Embed(title=f"[{guild_joined.name}] server's rules:",
-                    description=guild_rules,
+                    description=formated_output,
                     color=Colour.red())
         emb.set_footer(text="Using features on that server means you do respect these rules.")
         await member.send(embed=emb)
@@ -155,7 +176,7 @@ async def check_blacklist(guild:Guild, msg:Message):
     if await is_blacklist_exception(msg):
         return
     
-    bl = await read_db(guild.id, "blacklist")
+    bl = await read_db(DATABASE, guild.id, "blacklist")
     if not bl:
         return
     
@@ -165,6 +186,20 @@ async def check_blacklist(guild:Guild, msg:Message):
         if w in msg_content:
             await msg.delete()
             await msg.author.send(f"Word \"{w}\" is restricted to use in `{guild.name}`")
+
+async def check_if_naughty(member:Member):
+    """Checks whether or not the member has any records.
+
+    Args:
+        member (Member): Member to check
+
+    Returns:
+        bool: True if naughty, False if not
+    """
+    is_naughty = await id_lookup(NAUGHTY, member.id)
+    if is_naughty:
+        return True
+    return False
 
 async def is_blacklist_exception(msg:Message)->bool:
     FILTER_REMOVE_COMMAND_EXCEPTION = "filter remove"
@@ -195,7 +230,6 @@ async def on_message_error(ctx:Context, error):
 async def setup_hook():
     await CLIENT.tree.sync()
     print(f"In-app commands have been synchronized.")
-
 
 async def install_extensions(target:commands.Bot):
     """Install all the extentions in the other files to the client.

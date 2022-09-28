@@ -8,9 +8,11 @@ from discord.ext.commands import errors
 
 import utilities as S
 from utilities import delete_command_user_invoke, database_fail
-from jsonified_database import delete_from_db, insert_db, read_db, update_db
+from jsonified_database import delete_from_db, id_lookup, insert_db, read_db 
+from jsonified_database import update_db, add_id, read_id
 
-from barmaid import CLIENT
+from barmaid import CLIENT, DATABASE
+NAUGHTY_LIST = "naughty_list.json"
 
 @commands.hybrid_group(with_app_command=True, name="help-with")
 @commands.guild_only()      
@@ -213,7 +215,7 @@ async def prefix(ctx:commands.Context):
     """
     await ctx.defer(ephemeral=True)
     
-    prefix = await read_db(ctx.guild.id, "prefix")
+    prefix = await read_db(DATABASE, ctx.guild.id, "prefix")
     if not prefix:
         await database_fail(ctx)
         return
@@ -254,7 +256,7 @@ async def setprefix(ctx:commands.Context, new_prefix:str=None):
             f"Allowed symbols are:\n > {SYMBOLS}")
 
     await ctx.defer(ephemeral=True)
-    if not await update_db(ctx.guild.id, 'prefix', new_prefix):
+    if not await update_db(DATABASE, ctx.guild.id, 'prefix', new_prefix):
         await database_fail(ctx)
     else:
         await ctx.send(f"Prefix was set to `{new_prefix}` successfully.", 
@@ -351,6 +353,26 @@ async def kick_error(ctx:commands.Context, error:errors):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
     return
+
+async def add_to_naughty_list(member:int, guild:Guild, reason:str):
+    """Adds banned member to global bot naughty list, anyone can see on
+    different servers how naughty the member is.
+
+    Args:
+        member (int): Naughty members
+        guild (Guild): Guild banned from
+        reason (str): Guild reason banned for
+    """    
+    exists = await id_lookup(NAUGHTY_LIST, member)
+    if not exists:
+        await add_id(NAUGHTY_LIST, member)
+        
+    info_about_ban = {
+        "guild_name": guild.name,
+        "reason": reason
+    }
+    if not await insert_db(NAUGHTY_LIST, member, guild.id, info_about_ban):
+        await update_db(NAUGHTY_LIST, member, guild.id, info_about_ban)
       
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
@@ -395,6 +417,7 @@ async def ban(ctx:commands.Context, members:commands.Greedy[Member]=None, *,
             await member.ban(reason=reason, delete_message_days=del_msg_in_days)
             continue
         await member.ban(reason=reason, delete_message_days=del_msg_in_days)
+        await add_to_naughty_list(member.id, ctx.guild, reason)
     # App response
     await ctx.defer(ephemeral=True)
     await ctx.send("Success!", 
@@ -426,7 +449,37 @@ async def ban_error(ctx:commands.Context, error:errors):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
     return
-  
+
+@commands.hybrid_command(with_app_command=True)
+@commands.guild_only()
+@commands.has_guild_permissions(administrator=True)
+async def naugty(ctx:commands.Context, member:Member):
+    """Retrives naughty records for specified member.
+
+    Args:
+        ctx (commands.Context): Context of invoke
+        member (Member): Member to determine if its naughty
+    """
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+        
+    exists = await id_lookup(NAUGHTY_LIST, member.id)
+    if not exists:
+        ctx.send(f"Discord User: {member} has no records.",
+                 delete_after=S.DELETE_COMMAND_INVOKE)
+        return
+    
+    data = await read_id(NAUGHTY_LIST, member.id)
+    data_items = data.items()
+    message = f"User {member} has  `{len(data_items)}` records:\n>>> "
+    for _, server_info in data_items:
+        gn = server_info["guild_name"]
+        r = server_info["reason"]
+        message += f"{gn} — {r}"
+        
+    await ctx.defer(ephemeral=True)
+    await ctx.send(message, delete_after=S.DELETE_COMMAND_INVOKE)
+        
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
 @commands.has_guild_permissions(move_members=True)
@@ -604,7 +657,7 @@ async def rules(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    guild_rules:dict = await read_db(ctx.guild.id, "guild-rules")
+    guild_rules:dict = await read_db(DATABASE, ctx.guild.id, "guild-rules")
     if guild_rules:
         result:list = []      
         for idx, rule in guild_rules.items():
@@ -630,15 +683,15 @@ async def addrule(ctx:commands.Context, *, new_rule:str):
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     await ctx.defer(ephemeral=True)
     
-    exists = await read_db(ctx.guild.id, "guild-rules")
+    exists = await read_db(DATABASE, ctx.guild.id, "guild-rules")
     if not exists:
         rules:dict = {}
     else:
         rules = exists
     rules[f"{len(rules)}"] = new_rule
     
-    ok_insert = await insert_db(ctx.guild.id, "guild-rules", rules)
-    ok_update = await update_db(ctx.guild.id, "guild-rules", rules)
+    ok_insert = await insert_db(DATABASE, ctx.guild.id, "guild-rules", rules)
+    ok_update = await update_db(DATABASE, ctx.guild.id, "guild-rules", rules)
     if ok_update or ok_insert:
         await ctx.send("New rule applied.")
         return
@@ -657,7 +710,7 @@ async def rules_reset(ctx:commands.Context):
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     await ctx.defer(ephemeral=True)
     
-    successfull_remove = await delete_from_db(ctx.guild.id, "guild-rules")
+    successfull_remove = await delete_from_db(DATABASE, ctx.guild.id, "guild-rules")
     if successfull_remove:
         await ctx.send("Rules no longer apply.", 
                         delete_after=S.DELETE_COMMAND_INVOKE)
@@ -700,7 +753,7 @@ async def delrule(ctx:commands.Context, index:int):
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     await ctx.defer(ephemeral=True)
        
-    guild_rules:dict = await read_db(ctx.guild.id, "guild-rules")
+    guild_rules:dict = await read_db(DATABASE, ctx.guild.id, "guild-rules")
     if not guild_rules:
         await ctx.send("There are no rules therefore nothing to delete.")
         return
@@ -711,7 +764,7 @@ async def delrule(ctx:commands.Context, index:int):
         new_dict[str(idx)] = value
         idx += 1
 
-    ok_update = await update_db(ctx.guild.id, "guild-rules", new_dict)
+    ok_update = await update_db(DATABASE, ctx.guild.id, "guild-rules", new_dict)
     if ok_update:
         await ctx.send(f"Rule {index} deleted.")
         return
@@ -805,7 +858,7 @@ async def show(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE) 
     await ctx.defer(ephemeral=True)    
-    response = await read_db(ctx.guild.id, "auto-role")
+    response = await read_db(DATABASE,ctx.guild.id, "auto-role")
     if response:
         await ctx.send(f"Role to give when someone joins this server is: " \
             f"{ctx.guild.get_role(response).mention}",
@@ -850,11 +903,11 @@ async def set(ctx:commands.Context, role:Role):
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     await ctx.defer(ephemeral=True)
      
-    response = await insert_db(guid, "auto-role", role.id)
+    response = await insert_db(DATABASE, guid, "auto-role", role.id)
     if response:
         await ctx.send(f"New role set.", delete_after=S.DELETE_COMMAND_INVOKE)
         return
-    response = await update_db(guid, "auto-role", role.id)
+    response = await update_db(DATABASE, guid, "auto-role", role.id)
     if response:
         await ctx.send(f"Auto-role was updated.", delete_after=S.DELETE_COMMAND_INVOKE)
         return
@@ -872,7 +925,7 @@ async def remove(ctx:commands.Context):
     await ctx.defer(ephemeral=True)
     guid = ctx.guild.id
     
-    success = await delete_from_db(guid, "auto-role")
+    success = await delete_from_db(DATABASE, guid, "auto-role")
     if success:
         await ctx.send("Auto-role removed.", delete_after=S.DELETE_COMMAND_INVOKE)
         return
@@ -916,7 +969,7 @@ async def show(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     await ctx.defer(ephemeral=True)
-    blacklist:list = await read_db(ctx.guild.id, "blacklist")
+    blacklist:list = await read_db(DATABASE, ctx.guild.id, "blacklist")
 
     if not blacklist:
         await ctx.send(f"None are set.", delete_after=S.DELETE_COMMAND_ERROR)
@@ -939,9 +992,9 @@ async def add(ctx:commands.Context, *, words:str):
     await ctx.defer(ephemeral=True)
     words_each:list = words.split()
 
-    is_ok = await insert_db(ctx.guild.id, "blacklist", words_each)
+    is_ok = await insert_db(DATABASE, ctx.guild.id, "blacklist", words_each)
     if not is_ok:
-        is_updated = await update_db(ctx.guild.id, "blacklist", words_each)
+        is_updated = await update_db(DATABASE, ctx.guild.id, "blacklist", words_each)
         if not is_updated:
             await database_fail(ctx)
             return
@@ -961,7 +1014,7 @@ async def remove(ctx:commands.Context, *, words_to_del:str):
     await ctx.defer(ephemeral=True)
     words:list = words_to_del.split()
 
-    current_bl:list = await read_db(ctx.guild.id, "blacklist")
+    current_bl:list = await read_db(DATABASE,ctx.guild.id, "blacklist")
     if not current_bl:
         await ctx.send(f"Looks like none were ever set.", 
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -975,7 +1028,7 @@ async def remove(ctx:commands.Context, *, words_to_del:str):
                 except ValueError as e:
                     continue
                 
-    is_updated = await update_db(ctx.guild.id, "blacklist", current_bl)
+    is_updated = await update_db(DATABASE, ctx.guild.id, "blacklist", current_bl)
     if not is_updated:
         await database_fail(ctx)
         return
@@ -997,7 +1050,81 @@ async def filter_help(ctx:commands.Context):
                     "<prefix>filter remove word1",
                     color=S.EMBED_HELP_COMMAND_COLOR)    
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
-      
+
+@commands.hybrid_group(invoke_without_command=True)
+@commands.guild_only()
+@commands.has_permissions(administrator=True)
+async def mods_to_notify(ctx:commands.Context):
+    pass
+
+@mods_to_notify.command()
+async def show(ctx:commands.Context):
+    """Shows which guild users bot treats as guild mods.
+
+    Args:
+        ctx (commands.Context): Context of invoke
+    """ 
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+    mods_id:list = await read_db(DATABASE, ctx.guild.id, "mods_to_notify")
+    if not mods_id:
+        await ctx.defer(ephemeral=True)
+        await ctx.send("None set yet!")
+        return
+    mods:Member = [ctx.guild.get_member(int(m)) for m in mods_id]
+    msg = "Guild mods:\n>>> "
+    for m in mods:
+        msg+= f"{m.mention}\n"
+    await ctx.defer(ephemeral=True)
+    await ctx.send(msg)
+    
+@mods_to_notify.command()
+async def add(ctx:commands.Context, member:Member):
+    """Adds to bot new member to treat as a guild mod.
+
+    Args:
+        ctx (commands.Context): Context of invoke
+        member (Member): User to treat as guild mod
+    """
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+    
+    mods_now:list = await read_db(DATABASE, ctx.guild.id, "mods_to_notify")   
+    ok = await insert_db(DATABASE, ctx.guild.id, "mods_to_notify", [member.id])
+    if not ok:
+        mods_now.append(member.id)
+        # remove dups
+        mods_now = remove_dups(mods_now)
+        await update_db(DATABASE, ctx.guild.id, "mods_to_notify", mods_now)
+    await ctx.defer(ephemeral=True)
+    await ctx.send(f"{member} added!", delete_after=S.DELETE_COMMAND_INVOKE)
+
+@mods_to_notify.command()
+async def reset(ctx:commands.Context):
+    """Resets mods to zero.
+
+    Args:
+        ctx (commands.Context): Context of invoke
+    """
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+        
+    await delete_from_db(DATABASE, ctx.guild.id, "mods_to_notify")
+    
+    await ctx.defer(ephemeral=True)
+    await ctx.send("Reset successful.", delete_after=S.DELETE_COMMAND_INVOKE)
+
+def remove_dups(l:list):
+    """Removes any dups in a list
+
+    Args:
+        l (list): List to iterate
+
+    Returns:
+        list: New list without dup values
+    """
+    return list(set(l))     
+ 
 async def setup(target: commands.Bot):
     """Setup function which allows this module to be
     an extension loaded into the main file.
@@ -1015,7 +1142,8 @@ async def setup(target: commands.Bot):
                 invite, finvite, autorole, 
                 massdm, rules, addrule, 
                 filter, helpme, move, 
-                rules_reset, delrule
+                rules_reset, delrule, naugty,
+                mods_to_notify
     ]
     
     for c in COMMANDS_TO_ADD:
