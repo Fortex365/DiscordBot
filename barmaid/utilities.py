@@ -16,11 +16,11 @@ Message settings
 """
 try:
     with open(CONFIG_FILE_NAME, READ_MODE) as f:
-        serialized = json.load(f)
+        settings = json.load(f)
 except OSError:
         pass
 
-msg_stngs = serialized['DeleteMessages']      
+msg_stngs = settings['DeleteMessages']      
 DELETE_HOUR = 3600 
 DELETE_MINUTE = 60
 DELETE_DAY = DELETE_HOUR*HOURS_TO_DAY 
@@ -31,9 +31,15 @@ DELETE_EMBED_HELP = msg_stngs['DELETE_EMBED_HELP']
 EMBED_HELP_COMMAND_COLOR = Colour.blue()
 
 """
+Filenames
+"""
+DATABASE = settings["DATABASE_FILE_NAME"]
+NAUGHTY = settings["GLOBAL_NAUGHTY_LIST"]
+
+"""
 Activity settings
 """
-act_stngs = serialized['Activity']
+act_stngs = settings['Activity']
 CLIENT_ACTIVITY = act_stngs['CLIENT_ACTIVITY']  
 
 """

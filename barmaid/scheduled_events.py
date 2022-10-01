@@ -92,16 +92,23 @@ class ScheduledEvents:
                     assert response.status == 200
             except Exception as e:
                 print(f"EXCEPTION: {e}")
-            finally:
                 await session.close()
+                return
+        
+            await session.close()
+            return response
                 
                 
 async def test():
     abc = await ScheduledEvents.list_guild_events(907946271946440745)
     abc = json.dumps(abc, indent=2)
     print(abc)
-    # Timestamps must be ahead of time
-    #e = await ScheduledEvents.create_guild_event(907946271946440745,"This title", "This desc", "2022-08-28T23:45:00","2022-08-28T23:55:00",{"location":"doma"}, None)
+    #Timestamps must be ahead of time
+    e = await ScheduledEvents.create_guild_event(907946271946440745,
+                                                 "New Year!",
+                                                 "PF2023", "2022-12-31T23:00:00",
+                                                 "2022-12-31T23:59:59",
+                                                 {"location":"Home with Family"})
     
     
 if __name__ == "__main__":

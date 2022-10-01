@@ -4,13 +4,14 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Union
-from discord import Member, Intents, Game, Status, Reaction, app_commands
-from discord import Role, Guild, Embed, Colour, User, Object, Interaction
+from discord import Member, Intents, Game, Status, Reaction
+from discord import Role, Guild, Embed, Colour, User
 from discord.message import Message
 from discord.ext import commands
 from discord.ext.commands import Context
 
 import utilities as S
+from utilities import DATABASE, NAUGHTY
 from jsonified_database import id_lookup, insert_db, read_db, add_id, read_id
 from error_log import setup_logging
 
@@ -25,9 +26,6 @@ EXTENSIONS = [
     "minigames",
     "events",
 ]
-
-DATABASE = "data.json"
-NAUGHTY = "naughty_list.json"
 
 async def get_prefix(client:commands.Bot, message:Message):
     """Retrieves the prefix corresponding to a server if set,

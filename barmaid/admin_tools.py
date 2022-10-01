@@ -7,12 +7,12 @@ from discord.ext import commands
 from discord.ext.commands import errors
 
 import utilities as S
+from utilities import NAUGHTY
 from utilities import delete_command_user_invoke, database_fail
 from jsonified_database import delete_from_db, id_lookup, insert_db, read_db 
 from jsonified_database import update_db, add_id, read_id
 
 from barmaid import CLIENT, DATABASE
-NAUGHTY_LIST = "naughty_list.json"
 
 @commands.hybrid_group(with_app_command=True, name="help-with")
 @commands.guild_only()      
@@ -363,16 +363,16 @@ async def add_to_naughty_list(member:int, guild:Guild, reason:str):
         guild (Guild): Guild banned from
         reason (str): Guild reason banned for
     """    
-    exists = await id_lookup(NAUGHTY_LIST, member)
+    exists = await id_lookup(NAUGHTY, member)
     if not exists:
-        await add_id(NAUGHTY_LIST, member)
+        await add_id(NAUGHTY, member)
         
     info_about_ban = {
         "guild_name": guild.name,
         "reason": reason
     }
-    if not await insert_db(NAUGHTY_LIST, member, guild.id, info_about_ban):
-        await update_db(NAUGHTY_LIST, member, guild.id, info_about_ban)
+    if not await insert_db(NAUGHTY, member, guild.id, info_about_ban):
+        await update_db(NAUGHTY, member, guild.id, info_about_ban)
       
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
@@ -463,13 +463,13 @@ async def naugty(ctx:commands.Context, member:Member):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    exists = await id_lookup(NAUGHTY_LIST, member.id)
+    exists = await id_lookup(NAUGHTY, member.id)
     if not exists:
-        ctx.send(f"Discord User: {member} has no records.",
+        await ctx.send(f"Discord User: {member} has no records.",
                  delete_after=S.DELETE_COMMAND_INVOKE)
         return
     
-    data = await read_id(NAUGHTY_LIST, member.id)
+    data = await read_id(NAUGHTY, member.id)
     data_items = data.items()
     message = f"User {member} has  `{len(data_items)}` records:\n>>> "
     for _, server_info in data_items:
@@ -543,7 +543,7 @@ async def move_help(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
                 
-@commands.hybrid_group(invoke_without_command=True, name="dm-all")
+@commands.hybrid_group(with_app_command=True, name="dm-all")
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def massdm(ctx:commands.Context):
@@ -948,7 +948,7 @@ async def autorole_help(ctx:commands.Context):
                     color=S.EMBED_HELP_COMMAND_COLOR)    
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
  
-@commands.hybrid_group(invoke_without_command=True)
+@commands.hybrid_group(with_app_command=True)
 @commands.guild_only()
 @commands.has_guild_permissions(manage_messages=True)
 async def filter(ctx:commands.Context):
@@ -1051,7 +1051,7 @@ async def filter_help(ctx:commands.Context):
                     color=S.EMBED_HELP_COMMAND_COLOR)    
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
 
-@commands.hybrid_group(invoke_without_command=True)
+@commands.hybrid_group(with_app_command=True)
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
 async def mods_to_notify(ctx:commands.Context):
