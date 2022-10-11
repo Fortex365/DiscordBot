@@ -1,7 +1,11 @@
 import json
+import aiofiles
+import asyncio
+import sys
 from discord import Colour
 from discord.ext import commands
 
+CONFIG_LOADED = True
 HOURS_TO_DAY=24
 CONFIG_FILE_NAME = "config.json"
 READ_MODE = "r"
@@ -14,11 +18,25 @@ DEFAULT_SERVER_PREFIX = ".."
 """
 Message settings
 """
-try:
-    with open(CONFIG_FILE_NAME, READ_MODE) as f:
-        settings = json.load(f)
-except OSError:
-        pass
+async def load_config():
+    global CONFIG_LOADED
+    
+    try:
+        async with aiofiles.open(CONFIG_FILE_NAME, READ_MODE) as f:
+            content = await f.read()
+            _dict = json.loads(content)
+    except OSError as e:
+        print("Config loading failed. App launch terminated.")
+        sys.exit()
+    return _dict
+    
+#try:
+#    with open(CONFIG_FILE_NAME, READ_MODE) as f:
+#        settings = json.load(f)
+#except OSError:
+#        pass
+    
+settings = asyncio.run(load_config())
 
 msg_stngs = settings['DeleteMessages']      
 DELETE_HOUR = 3600 

@@ -14,6 +14,7 @@ import utilities as S
 from utilities import DATABASE, NAUGHTY
 from jsonified_database import id_lookup, insert_db, read_db, add_id, read_id
 from error_log import setup_logging
+from re import search
 
 # Intents manages some level of permissions bot can do
 INTENTS = Intents.default()
@@ -201,12 +202,13 @@ async def check_if_naughty(member:Member):
 
 async def is_blacklist_exception(msg:Message)->bool:
     FILTER_REMOVE_COMMAND_EXCEPTION = "filter remove"
-    msg_content = msg.content
+    msg_content = msg.content[:13]
     msg_content.lower()
     
-    if FILTER_REMOVE_COMMAND_EXCEPTION in msg_content:
+    if search(FILTER_REMOVE_COMMAND_EXCEPTION, msg_content):
         return True
     return False
+    
     
 @CLIENT.event
 async def on_command_error(ctx:Context, error:commands.CommandError):
@@ -242,7 +244,7 @@ if __name__ == "__main__":
     """This is main module and only one to be executed."""
     
     CONNECTION_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     
     # Boots up the client
     loop.run_until_complete(install_extensions(CLIENT))

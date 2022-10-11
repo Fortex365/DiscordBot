@@ -9,5 +9,6 @@
     "CLIENT_ACTIVITY": "Your local e-Barmaid"
   },
   "DATABASE_FILE_NAME": "data.json",
-  "GLOBAL_NAUGHTY_LIST": "naughty_list.json"
+  "GLOBAL_NAUGHTY_LIST": "naughty_list.json",
+  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id=821538075078557707"
 }

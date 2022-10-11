@@ -2,6 +2,7 @@ import json
 import os
 import asyncio
 import aiohttp
+from utilities import BOT_AUTH_HEADER
 
 class ScheduledEvents:
     """Class connected to discord endpoint via http to communicate with it.
@@ -13,12 +14,12 @@ class ScheduledEvents:
     EXTERNAL = 3
     
     TOKEN:str = os.environ.get('DISCORD_BOT_TOKEN')
-    BOT:str = "https://discord.com/oauth2/authorize?client_id=821538075078557707"
+    BOT_AUTH_HEADER
     API_URL:str = "https://discord.com/api/v8"
     
     AUTH_HEADERS:dict = {
         "Authorization":f"Bot {TOKEN}",
-        "User-Agent":f"DiscordBot ({BOT}) Python/3.9 aiohttp/3.8.1",
+        "User-Agent":f"DiscordBot ({BOT_AUTH_HEADER}) Python/3.9 aiohttp/3.8.1",
         "Content-Type":"application/json"
     }
     
