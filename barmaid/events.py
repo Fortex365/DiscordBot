@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from hashlib import blake2b
 import uuid
 from typing import Union
@@ -10,7 +10,7 @@ from utilities import DATABASE, delete_command_user_invoke
 from scheduled_events import ScheduledEvents
 
 from discord import Embed, Member, channel, Invite
-from discord import Role, Guild, VoiceChannel, Reaction, User
+from discord import Role, Guild, VoiceChannel, Reaction, User, Object
 
 from discord import app_commands, Interaction, ButtonStyle, InteractionMessage
 from discord.ui import Button, View, button
@@ -127,12 +127,12 @@ async def format_time(in_str:str) -> str:
 @commands.hybrid_group(with_app_command=True)
 @commands.guild_only()
 @commands.has_permissions(manage_messages=True)
-async def new_events(ctx:commands.Context):
+async def events(ctx:commands.Context):
     pass
 
-@new_events.command()
-async def internal_voice(ctx:commands.Context, title:str, description:str, start_time:str, voice_ch:VoiceChannel, end_time:str=None):
-    """Creates event as internal discord feature. [VOICECHANNEL LOCATION]
+@events.command()
+async def ivoice(ctx:commands.Context, title:str, description:str, start_time:str, voice_ch:VoiceChannel, end_time:str=None):
+    """Creates event as internal discord feature, with voice channel.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -167,9 +167,9 @@ async def internal_voice(ctx:commands.Context, title:str, description:str, start
     await ctx.send(f"Event creation has failed. Try again later.", 
                    delete_after=S.DELETE_COMMAND_ERROR)
 
-@new_events.command()
-async def internal_location(ctx:commands.Context, title:str, description:str, start_time:str, end_time:str, location:str):
-    """Creates event as internal discord feature. [EXTERNAL LOCATION]
+@events.command()
+async def ilocation(ctx:commands.Context, title:str, description:str, start_time:str, end_time:str, location:str):
+    """Creates event as internal discord feature, with custom location.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -206,16 +206,16 @@ async def internal_location(ctx:commands.Context, title:str, description:str, st
     await ctx.send(f"Event creation has failed. Try again later.", 
                    delete_after=S.DELETE_COMMAND_ERROR)
 
-@new_events.command()
-async def chat_post(ctx:commands.Context, include_names:bool, title:str, description:str, start_time:str, voice:VoiceChannel):
-    """Posts an event into chat. Users can interact with it via buttons.
+@events.command()
+async def echat(ctx:commands.Context, include_names:bool, title:str, description:str, start_time:str, voice:VoiceChannel):
+    """External chat-based interactive event via buttons.
 
     Args:
         ctx (commands.Context): Context of invoke
-        include_names (bool): Whether use count or list user names
+        include_names (bool): Include names in event category lists.
         title (str): Title of event
         description (str): Description of event
-        start_time (str): Start time of event
+        start_time (str): Start time of event. Use yyyy-mm-dd hh:mm:ss to enable notifications.
         voice (VoiceChannel): Voice channel
     """
     # will be long interaction
@@ -241,10 +241,52 @@ async def chat_post(ctx:commands.Context, include_names:bool, title:str, descrip
     
     ok = await insert_db(DATABASE, ctx.guild.id, hash, {})
     if not ok:
-        await ctx.send("Something has failed. Try again later.")
+        await ctx.send("Something has failed. Try again later.", 
+                       delete_after=S.DELETE_COMMAND_ERROR)
         return
     await ctx.send(embed=emb, view=v)
+    try:
+        await setup_notification(ctx, emb, start_time)
+    except ValueError:
+        await ctx.send("Event start time notification could not recognize date." / 
+                 "Notification for event won't be applied.",
+                 delete_after=S.DELETE_COMMAND_ERROR)
+      
+async def setup_notification(ctx:Context, emb:Embed, time:str):
+    """Set's a timed notification for event start 15 minutes ahead.
 
+    Args:
+        ctx (Context): Context of invoke
+        emb (Embed): Original embed of event
+        time (str): Start time of event
+
+    Raises:
+        ValueError: If time format wasn't recognized and notification could not
+        be set.
+    """
+    NAME_FIELD_POSITION = 0
+    ISO_FORMAT = "%Y-%m-%dT%H:%M:%S"
+    
+    try:
+        iso_time_format = await format_time(time)
+    except ValueError:
+        raise ValueError("Format could have not been recognized.")
+    event_name = emb.fields[NAME_FIELD_POSITION].value
+    original_time = datetime.strptime(iso_time_format, ISO_FORMAT)
+    fifteen_mins_before = original_time - timedelta(minutes=15)
+    
+    time_now = datetime.utcnow() + timedelta(hours=2)
+    to_wait = fifteen_mins_before - time_now
+    if time_now > fifteen_mins_before:
+        return
+    
+    await ctx.send(f"Notifications was set 15 minutes ahead successfully!",
+                    delete_after=S.DELETE_COMMAND_INVOKE)
+    #print(f"{to_wait.seconds}")
+    await asyncio.sleep(to_wait.seconds)
+    await ctx.send(f"@here Event `{event_name}` starting soon!",
+                delete_after=S.DELETE_COMMAND_INVOKE)
+    
 class EventView(View):
     """Class reprezenting a view for chat based scheduled events.
 
@@ -328,7 +370,7 @@ class EventView(View):
         origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
         n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.SIGN_IN_FIELD_POSITION)
         
-        v:str = v.removeprefix("N/A") if "N/A" in v else None
+        v:str = v.removeprefix("N/A") if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
             new_emb = del_name_occurance(origin_embed, clicked_by)
@@ -379,7 +421,7 @@ class EventView(View):
         origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
         n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.DECLINED_FIELD_POSITION)
         
-        v:str = v.removeprefix("N/A") if "N/A" in v else None
+        v:str = v.removeprefix("N/A") if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
             new_emb = del_name_occurance(origin_embed, clicked_by)
@@ -430,7 +472,7 @@ class EventView(View):
         origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
         n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.TENTATIVE_FIELD_POSITION)
         
-        v:str = v.removeprefix("N/A") if "N/A" in v else None
+        v:str = v.removeprefix("N/A") if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
             new_emb = del_name_occurance(origin_embed, clicked_by)
@@ -569,7 +611,7 @@ async def setup(target: commands.Bot):
     """
     global CLIENT
     
-    COMMANDS = [new_events]
+    COMMANDS = [events]
     
     for c in COMMANDS:
         target.add_command(c)

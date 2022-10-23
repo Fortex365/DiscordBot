@@ -70,6 +70,7 @@ Bot related stuff
 """
 BOT_INVITE_URL = "https://discord.com/api/oauth2/authorize?client_id=" \
     "821538075078557707&permissions=8&scope=bot%20applications.commands"
+BOT_AUTH_HEADER = "https://discord.com/oauth2/authorize?client_id=821538075078557707"
 
 """
 Utility functions

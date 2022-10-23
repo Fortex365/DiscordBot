@@ -14,7 +14,7 @@ from jsonified_database import update_db, add_id, read_id
 
 from barmaid import CLIENT, DATABASE
 
-@commands.hybrid_group(with_app_command=True, name="help-with")
+@commands.hybrid_group(with_app_command=True, name="h")
 @commands.guild_only()      
 async def helpme(ctx:commands.Context):
     """Gets help for a specified command
@@ -543,7 +543,7 @@ async def move_help(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
                 
-@commands.hybrid_group(with_app_command=True, name="dm-all")
+@commands.hybrid_group(with_app_command=True, name="admin")
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def massdm(ctx:commands.Context):
@@ -555,8 +555,8 @@ async def massdm(ctx:commands.Context):
     pass
 
 @massdm.command()
-async def regular(ctx:commands.Context, *, message:str):
-    """Allows to send regular message to all discord server members.
+async def message(ctx:commands.Context, *, message:str):
+    """Send message to all server members. *SERVER-OWNER ONLY*
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -604,9 +604,9 @@ async def massdm_error(error:errors, ctx:commands.Context):
     raise error
 
 @massdm.command()
-async def embeded(ctx:commands.Context, message:str, footer:str, 
+async def embedded(ctx:commands.Context, message:str, footer:str, 
                   color:str="0x00fefe"):
-    """Allows to send embeded message to all discord server members.
+    """Send embedded message to all server members. *SERVER-OWNER ONLY*
 
     Args:
         ctx (commands.Context): Context of command invocation
@@ -1051,7 +1051,7 @@ async def filter_help(ctx:commands.Context):
                     color=S.EMBED_HELP_COMMAND_COLOR)    
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
 
-@commands.hybrid_group(with_app_command=True)
+@commands.hybrid_group(with_app_command=True, name="moderation")
 @commands.guild_only()
 @commands.has_permissions(administrator=True)
 async def mods_to_notify(ctx:commands.Context):

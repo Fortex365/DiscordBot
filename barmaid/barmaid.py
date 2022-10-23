@@ -208,8 +208,7 @@ async def is_blacklist_exception(msg:Message)->bool:
     if search(FILTER_REMOVE_COMMAND_EXCEPTION, msg_content):
         return True
     return False
-    
-    
+      
 @CLIENT.event
 async def on_command_error(ctx:Context, error:commands.CommandError):
     """Event triggered when command module raises an exception.
