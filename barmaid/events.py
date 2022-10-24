@@ -1,25 +1,20 @@
 import asyncio
 from datetime import datetime, timedelta
-from hashlib import blake2b
 import uuid
-from typing import Union
-from jsonified_database import insert_db, read_db, update_db
 
+from jsonified_database import insert_db, read_db, update_db
 import utilities as S
 from utilities import DATABASE, delete_command_user_invoke
+from EventView import EventView
 from scheduled_events import ScheduledEvents
 
 from discord import Embed, Member, channel, Invite
 from discord import Role, Guild, VoiceChannel, Reaction, User, Object
 
-from discord import app_commands, Interaction, ButtonStyle, InteractionMessage
-from discord.ui import Button, View, button
-from discord.app_commands import Choice
-
 from discord.message import Message
 
 from discord.ext import commands
-from discord.ext.commands import errors, Context
+from discord.ext.commands import Context
 
 """
 Client instance loaded after barmaid.load_extensions() passes its instance into
@@ -30,6 +25,7 @@ work for example at events.usr_input(ctx, client).
 """
 CLIENT:commands.Bot = None
 
+# to be del
 async def ask_for(ctx:Context, requested_input:str)->str:
     # Asks in chat for for requested input
     await ctx.send(f"{requested_input}", delete_after=S.DELETE_MINUTE)   
@@ -43,7 +39,8 @@ async def ask_for(ctx:Context, requested_input:str)->str:
     # Parse the answer 
     answer = None if answer.content == "skip" else answer.content
     return answer
-              
+
+# to be del             
 def is_timedout_or_cancelled(msg:Message):
     """Determines if message user responded was timeouted or command cancel
     message.
@@ -62,6 +59,7 @@ def is_timedout_or_cancelled(msg:Message):
             return True
         return False
 
+# to be del
 async def usr_input(ctx:Context, bot:commands.Bot, timeout:int=60) -> Message:
     """Waits for input from user in a form of next message.
 
@@ -83,32 +81,6 @@ async def usr_input(ctx:Context, bot:commands.Bot, timeout:int=60) -> Message:
                        delete_after=S.DELETE_MINUTE)
         return
     return msg   
-
-def embed_hash(emb:Embed) -> str:
-    """Gets hash of the embed.
-
-    Args:
-        emb (Embed): Embed to get its hash
-
-    Returns:
-        str: Hash
-    """
-    footer:str = emb.footer.text
-    hash = footer.split(",")
-    return hash[0]
-
-def does_embed_include_names(emb:Embed) -> bool:
-    """Gets atribute of embed whether use count people or include names.
-
-    Args:
-        emb (Embed): Embed to determine
-
-    Returns:
-        bool: True if names, False for counting
-    """
-    footer:str = emb.footer.text
-    include_names:str = footer.split(",")
-    return eval(include_names[1])
 
 async def format_time(in_str:str) -> str:
     """Formats string from %Y-%m-%d %H:%M:%S into ISO8601 format.
@@ -207,7 +179,7 @@ async def ilocation(ctx:commands.Context, title:str, description:str, start_time
                    delete_after=S.DELETE_COMMAND_ERROR)
 
 @events.command()
-async def echat(ctx:commands.Context, include_names:bool, title:str, description:str, start_time:str, voice:VoiceChannel):
+async def echat(ctx:commands.Context, include_names:bool, title:str, description:str, start_time:str, voice:VoiceChannel, limit:int=0):
     """External chat-based interactive event via buttons.
 
     Args:
@@ -222,10 +194,12 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     await ctx.defer()
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    #hash = blake2b(digest_size=10).hexdigest()
     hash = uuid.uuid4().hex
     v = EventView()
     default_unknown_value = "N/A" if include_names else "0"
+    sign_up_string = f"Sign-ups✅ 0/{limit}" if limit > 0 and include_names else "Sign-ups✅"
+    sign_up_string = f"Sign-ups✅ (limited {limit})" if limit > 0 and not include_names else sign_up_string
+    lim = True if limit > 0 else False
     
     emb = Embed()
     emb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
@@ -233,26 +207,26 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     emb.add_field(name="Date", value=start_time, inline=True)
     emb.add_field(name="Description", value=description, inline=True)
     emb.add_field(name="Voice", value=f"<#{voice.id}>", inline=False)
-    emb.add_field(name="Sign-ups✅", value=default_unknown_value, inline=True)
+    emb.add_field(name=sign_up_string, value=default_unknown_value, inline=True)
     emb.add_field(name="Declined❌", value=default_unknown_value, inline=True)
     emb.add_field(name="Tentative❔", value=default_unknown_value, inline=True)
     emb.add_field(name="Calendar", value="N/A", inline=False)
-    emb.set_footer(text=f"{hash}, {include_names}")
+    emb.set_footer(text=f"{hash}, {include_names}, {lim}")
     
     ok = await insert_db(DATABASE, ctx.guild.id, hash, {})
     if not ok:
         await ctx.send("Something has failed. Try again later.", 
                        delete_after=S.DELETE_COMMAND_ERROR)
         return
-    await ctx.send(embed=emb, view=v)
+    event_message = await ctx.send(embed=emb, view=v)
     try:
-        await setup_notification(ctx, emb, start_time)
+        await setup_notification(ctx, emb, event_message.id, start_time)
     except ValueError:
         await ctx.send("Event start time notification could not recognize date." / 
                  "Notification for event won't be applied.",
                  delete_after=S.DELETE_COMMAND_ERROR)
       
-async def setup_notification(ctx:Context, emb:Embed, time:str):
+async def setup_notification(ctx:Context, emb:Embed, message_id:int, time:str):
     """Set's a timed notification for event start 15 minutes ahead.
 
     Args:
@@ -267,6 +241,7 @@ async def setup_notification(ctx:Context, emb:Embed, time:str):
     NAME_FIELD_POSITION = 0
     ISO_FORMAT = "%Y-%m-%dT%H:%M:%S"
     
+    # Determine time to wait before notification
     try:
         iso_time_format = await format_time(time)
     except ValueError:
@@ -274,333 +249,29 @@ async def setup_notification(ctx:Context, emb:Embed, time:str):
     event_name = emb.fields[NAME_FIELD_POSITION].value
     original_time = datetime.strptime(iso_time_format, ISO_FORMAT)
     fifteen_mins_before = original_time - timedelta(minutes=15)
-    
     time_now = datetime.utcnow() + timedelta(hours=2)
     to_wait = fifteen_mins_before - time_now
     if time_now > fifteen_mins_before:
         return
-    
     await ctx.send(f"Notifications was set 15 minutes ahead successfully!",
                     delete_after=S.DELETE_COMMAND_INVOKE)
-    #print(f"{to_wait.seconds}")
+    
+    # Notify in the channel
     await asyncio.sleep(to_wait.seconds)
     await ctx.send(f"@here Event `{event_name}` starting soon!",
                 delete_after=S.DELETE_COMMAND_INVOKE)
     
-class EventView(View):
-    """Class reprezenting a view for chat based scheduled events.
-
-    Args:
-        View (discord.ui.View): View component
-    """
-    EMBED_CHATPOST_EVENT_POSITION = 0
-    SIGN_IN_FIELD_POSITION = 4
-    DECLINED_FIELD_POSITION = 5
-    TENTATIVE_FIELD_POSITION = 6
-    
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @staticmethod
-    async def do_update_embed(new_emb:Embed, old_emb:Embed,
-                              interaction:Interaction, position:int,
-                              clicked_by:User, name:str, value:str, 
-                              inline:bool):
-        """Removes clicked user from all types (Signin, Declined, Tentatives)
-        and puts him into the new one clicked.
-
-        Args:
-            new_emb (Embed): Embed with user in new category
-            old_emb (Embed): Embed with user in previous category
-            interaction (Interaction): Interaction of buttons
-            position (int): Position of embed field to update in new category
-            clicked_by (User): User who clicked button
-            name (str): Field name
-            value (str): Field value
-            inline (bool): Whether or not field is inline
-        """
-        new_emb = del_name_occurance(old_emb, clicked_by)
-        if not clicked_by.mention in value:
-            new_emb.set_field_at(position, name=name,
-                                 value=value+"\n"+clicked_by.mention,
-                                 inline=inline)
-            
-            await interaction.edit_original_response(embed=new_emb)
-            return
-    
-    @staticmethod
-    async def get_embed_name_value_inline(origin_embed:Embed, vote_category):
-        """For embed returns it's tuple (value, name, inline) based on vote 
-        category.
-
-        Args:
-            origin_embed (Embed): Embed from the message
-            vote_category: Vote category
-
-        Returns:
-            tuple: Tuple of (value, name, inline)
-        """
-        emb_fields = origin_embed.fields
-        
-        signins_value = emb_fields[vote_category].value
-        signins_name = emb_fields[vote_category].name
-        signins_inline = emb_fields[vote_category].inline
-        return (signins_name, signins_value, signins_inline)
-     
-    async def enable_all_buttons(self):
-        """Enables all buttons.
-        """
-        self.sign_in.disabled = False
-        self.decline.disabled = False
-        self.tentative.disabled = False
-        
-    @button(label="Accept", style=ButtonStyle.green)
-    async def sign_in(self, interaction: Interaction, button:Button):
-        """Button for handling user input to sign into chat-posted scheduled
-        event.
-
-        Args:
-            interaction (Interaction): Interaction of button
-            button (Button): Button itself
-        """
-        await interaction.response.defer()
-        clicked_by = interaction.user
-        
-        origin = await interaction.original_response()
-        origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
-        n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.SIGN_IN_FIELD_POSITION)
-        
-        v:str = v.removeprefix("N/A") if "N/A" in v else v
-        
-        if does_embed_include_names(origin_embed):
-            new_emb = del_name_occurance(origin_embed, clicked_by)
-            await EventView.do_update_embed(new_emb,
-                                            origin_embed, interaction,
-                                            EventView.SIGN_IN_FIELD_POSITION,
-                                            clicked_by, n, v, i)
-            return
-        else:
-            changed = await del_my_one_count(origin_embed, clicked_by,
-                                            interaction.guild_id, "sign")
-            votes:dict = await read_db(DATABASE, interaction.guild_id,
-                                        embed_hash(origin_embed))
-            if votes:
-                # update my vote as signed
-                votes[str(clicked_by.id)] = "sign"
-                await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                            votes)
-            else:
-                # my first vote is signed
-                await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                                {str(clicked_by.id): "sign"})
-            fields = changed.fields
-            sign = fields[EventView.SIGN_IN_FIELD_POSITION]
-            new_value = int(sign.value)+1
-            new_name = sign.name
-            new_inline = sign.inline
-            changed.set_field_at(EventView.SIGN_IN_FIELD_POSITION,
-                                 value=str(new_value), name=new_name,
-                                 inline=new_inline)
-            await interaction.edit_original_response(embed=changed)
-            await self.enable_all_buttons()
-            button.disabled = True
-            
-    @button(label="Decline", style=ButtonStyle.red)
-    async def decline(self, interaction: Interaction, button:Button):
-        """Button for handling user input to decline into chat-posted scheduled
-        event.
-
-        Args:
-            interaction (Interaction): Interaction of button
-            button (Button): Button itself
-        """
-        await interaction.response.defer()
-        clicked_by = interaction.user
-        
-        origin = await interaction.original_response()
-        origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
-        n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.DECLINED_FIELD_POSITION)
-        
-        v:str = v.removeprefix("N/A") if "N/A" in v else v
-        
-        if does_embed_include_names(origin_embed):
-            new_emb = del_name_occurance(origin_embed, clicked_by)
-            await EventView.do_update_embed(new_emb,
-                                            origin_embed, interaction,
-                                            EventView.DECLINED_FIELD_POSITION,
-                                            clicked_by, n, v, i)
-            return
-        else:
-            changed = await del_my_one_count(origin_embed, clicked_by,
-                                            interaction.guild_id, "decline")
-            votes:dict = await read_db(DATABASE, interaction.guild_id,
-                                        embed_hash(origin_embed))
-            if votes:
-                # update my vote as declined
-                votes[str(clicked_by.id)] = "decline"
-                await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                            votes)
-            else:
-                # my first vote is declined
-                await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                                {str(clicked_by.id): "decline"})
-            fields = changed.fields
-            decline = fields[EventView.DECLINED_FIELD_POSITION]
-            new_value = int(decline.value)+1
-            new_name = decline.name
-            new_inline = decline.inline
-            changed.set_field_at(EventView.DECLINED_FIELD_POSITION,
-                                 value=str(new_value), name=new_name,
-                                 inline=new_inline)
-            await interaction.edit_original_response(embed=changed)
-            await self.enable_all_buttons()
-            button.disabled = True
-    
-    @button(label="Tentative", style=ButtonStyle.secondary)
-    async def tentative(self, interaction: Interaction, button:Button):
-        """Button for handling user input to tentative into chat-posted scheduled
-        event.
-
-        Args:
-            interaction (Interaction): Interaction of button
-            button (Button): Button itself
-        """
-        await interaction.response.defer()
-        clicked_by = interaction.user
-        
-        origin = await interaction.original_response()
-        origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
-        n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.TENTATIVE_FIELD_POSITION)
-        
-        v:str = v.removeprefix("N/A") if "N/A" in v else v
-        
-        if does_embed_include_names(origin_embed):
-            new_emb = del_name_occurance(origin_embed, clicked_by)
-            await EventView.do_update_embed(new_emb,
-                                            origin_embed, interaction,
-                                            EventView.TENTATIVE_FIELD_POSITION,
-                                            clicked_by, n, v, i)
-            return
-        else:
-            changed = await del_my_one_count(origin_embed, clicked_by,
-                                            interaction.guild_id, "tentative")
-            votes:dict = await read_db(DATABASE, interaction.guild_id,
-                                        embed_hash(origin_embed))
-            if votes:
-                # update my vote as tentative
-                votes[str(clicked_by.id)] = "tentative"
-                await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                            votes)
-            else:
-                # my first vote is tentative
-                await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                                {str(clicked_by.id): "tentative"})
-            fields = changed.fields
-            tentative = fields[EventView.TENTATIVE_FIELD_POSITION]
-            new_value = int(tentative.value)+1
-            new_name = tentative.name
-            new_inline = tentative.inline
-            changed.set_field_at(EventView.TENTATIVE_FIELD_POSITION,
-                                 value=str(new_value), name=new_name,
-                                 inline=new_inline)
-            await interaction.edit_original_response(embed=changed)
-            await self.enable_all_buttons()
-            button.disabled = True
-    
-def del_name_occurance(emb:Embed, usr:User) -> Embed:
-    """Removes user occurence in chat-posted scheduled event in one of its 
-    category.
-
-    Args:
-        emb (Embed): Embed of the scheduled event
-        usr (User): User to remove from its category
-
-    Returns:
-        Embed: New embed without user in any of the category
-    """
-    emb_fields = emb.fields[EventView.SIGN_IN_FIELD_POSITION:EventView.TENTATIVE_FIELD_POSITION+1]
-    start_count = EventView.SIGN_IN_FIELD_POSITION
-    emb_fields_with_position = []
-    for f in emb_fields:
-        emb_fields_with_position.append((f, start_count))
-        start_count += 1
-        
-    for field, pos in emb_fields_with_position:
-        new_value:str = field.value
-        new_name = field.name
-        new_inline = field.inline
-        
-        if usr.mention in new_value:
-            new_value = new_value.replace(usr.mention, "", 1)
-            new_value = "N/A" if new_value == "" else new_value
-            emb.set_field_at(pos, name=new_name, value=new_value, inline=new_inline)
-    return emb
-
-async def del_my_one_count(emb:Embed, usr:User, guild_id:int, sent_by:str) -> Embed:
-    """Delete's user count in any of the category in chat-posted scheduled event.
-
-    Args:
-        emb (Embed): Current state of embed
-        usr (User): User's vote to remove
-        guild_id (int): Guild id of the message
-        sent_by (str): Values "sign" "decline" "tentative" sent by buttons
-
-    Raises:
-        ValueError: When user's vote doesnt match acceptable value
-
-    Returns:
-        Embed: New embed without user's vote
-    """
-    votes = await read_db(DATABASE, guild_id, embed_hash(emb))
-    emb_fields = emb.fields
-    try:
-        user_vote = votes[str(usr.id)]
-    except KeyError:
-        return emb
-    if user_vote == "sign":
-        sign = emb_fields[EventView.SIGN_IN_FIELD_POSITION]
-        new_value = sign.value
-        name = sign.name
-        inline = sign.inline
-        # we subtract our vote
-        new_value = int(new_value)-1
-        # if undershoot
-        if new_value <= 0:
-            new_value = "0"
-        # modify the embed and return it
-        emb.set_field_at(EventView.SIGN_IN_FIELD_POSITION,
-                         name=name,
-                         value=str(new_value),
-                         inline=inline)
-        return emb
-    elif user_vote == "decline":
-        decline = emb_fields[EventView.DECLINED_FIELD_POSITION]
-        new_value = decline.value
-        name = decline.name
-        inline = decline.inline
-        new_value = int(new_value)-1
-        if new_value <= 0:
-            new_value = "0"
-        emb.set_field_at(EventView.DECLINED_FIELD_POSITION,
-                         name=name,
-                         value=str(new_value),
-                         inline=inline)
-        return emb
-    elif user_vote == "tentative":
-        tentative = emb_fields[EventView.TENTATIVE_FIELD_POSITION]
-        new_value = tentative.value
-        name = tentative.name
-        inline = tentative.inline
-        new_value = int(new_value)-1
-        if new_value <= 0:
-            new_value = "0"
-        emb.set_field_at(EventView.TENTATIVE_FIELD_POSITION,
-                         name=name,
-                         value=str(new_value),
-                         inline=inline)
-        return emb
-    raise ValueError("Bad argument value of user event vote.")
-            
+    # Notify the signed up members
+    new_updated_message = await ctx.fetch_message(message_id)
+    new_updated_embed = new_updated_message.embeds[0]
+    sign_field = new_updated_embed.fields[4]
+    mentions = sign_field.value
+    trick_to_get_mentions_in_list = await ctx.send(content=mentions)
+    await trick_to_get_mentions_in_list.delete()
+    user_mentions = trick_to_get_mentions_in_list.mentions
+    for u in user_mentions:
+        await u.send(f"Event `{event_name}` on `{ctx.guild.name}` is starting soon!")
+                  
 async def setup(target: commands.Bot):
     """Setup function which allows this module to be
     an extension loaded into the main file.
@@ -625,10 +296,5 @@ if __name__ == "__main__":
 
 """
 TO DO:
-make sign-ups sign-outs for events (toggle with number or list of @mentions, or autoswitch)
 implement add to calendar for events
-implement notifications for events (to remind event is starting soon)
-add place to event
-
-implement fully custom embed user can make field by field
 """
