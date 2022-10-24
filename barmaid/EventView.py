@@ -1,4 +1,5 @@
 from typing import Union
+from functools import lru_cache
 from jsonified_database import insert_db, read_db, update_db
 
 import utilities as S
@@ -132,32 +133,38 @@ class EventView(View):
             POSITION = EventView.TENTATIVE_FIELD_POSITION
             
         # remove my vote from any field im in
-        changed = await EventView.del_my_one_count(origin_embed, clicked_by,
+        changed = await EventView.del_no_name_occurance(origin_embed, clicked_by,
                                         interaction.guild_id, type)
         votes:dict = await read_db(DATABASE, interaction.guild_id,
                                     embed_hash(origin_embed))
-        if votes:
-            # update my vote as signed/decline/tentative
-            votes[str(clicked_by.id)] = type
-            await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                        votes)
-        else:
-            # my first vote is signed/decline/tentative
-            await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                            {str(clicked_by.id): type})
+        if not votes:
+            votes = {}
+            await insert_db(DATABASE, interaction.guild_id, 
+                            embed_hash(origin_embed), votes)
+        # determine my vote for later
+        votes[str(clicked_by.id)] = type
         fields = changed.fields
         action = fields[POSITION]
         new_name = action.name
-        new_value = int(action.value)+1
-        """
-        JE POTŘEBA UDĚLAT POČET HLASŮ DLE POČTU V DATABÁZI JINAK JEDEN UŽIVATEL 
-        JE SCHOPNÝ ODEČÍST DALŠÍHO
-        """
+        new_value = int(action.value)
+        
         if type == "sign":
             text = new_name.split(" ")
             limit = text[2]
             limit_value = int(limit.removesuffix(")"))
-            new_value = limit_value if new_value > limit_value else new_value
+            if not new_value == limit_value:
+                await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
+                        votes)
+            else:
+                await interaction.followup.send(
+                    content="I'm sorry, but the event exceeded it's sign-ups.",
+                    ephemeral=True)
+            new_value = new_value + 1 if new_value < limit_value else new_value
+        else:
+            new_value += 1
+            # update my vote into db aswell
+            await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
+                        votes)
         new_inline = action.inline
         changed.set_field_at(POSITION,
                                 value=str(new_value), name=new_name,
@@ -252,28 +259,29 @@ class EventView(View):
                                             clicked_by, n, v, i)
             return
         else:
-            changed = await EventView.del_my_one_count(origin_embed, clicked_by,
-                                            interaction.guild_id, "decline")
-            votes:dict = await read_db(DATABASE, interaction.guild_id,
-                                        embed_hash(origin_embed))
-            if votes:
-                # update my vote as declined
-                votes[str(clicked_by.id)] = "decline"
-                await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                            votes)
-            else:
-                # my first vote is declined
-                await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                                {str(clicked_by.id): "decline"})
-            fields = changed.fields
-            decline = fields[EventView.DECLINED_FIELD_POSITION]
-            new_value = int(decline.value)+1
-            new_name = decline.name
-            new_inline = decline.inline
-            changed.set_field_at(EventView.DECLINED_FIELD_POSITION,
-                                 value=str(new_value), name=new_name,
-                                 inline=new_inline)
-            await interaction.edit_original_response(embed=changed)
+            await EventView.do_action_no_names("decline", origin_embed, interaction, clicked_by)
+            #changed = await EventView.del_no_name_occurance(origin_embed, clicked_by,
+            #                                interaction.guild_id, "decline")
+            #votes:dict = await read_db(DATABASE, interaction.guild_id,
+            #                            embed_hash(origin_embed))
+            #if votes:
+            #    # update my vote as declined
+            #    votes[str(clicked_by.id)] = "decline"
+            #    await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
+            #                votes)
+            #else:
+            #    # my first vote is declined
+            #    await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
+            #                    {str(clicked_by.id): "decline"})
+            #fields = changed.fields
+            #decline = fields[EventView.DECLINED_FIELD_POSITION]
+            #new_value = int(decline.value)+1
+            #new_name = decline.name
+            #new_inline = decline.inline
+            #changed.set_field_at(EventView.DECLINED_FIELD_POSITION,
+            #                     value=str(new_value), name=new_name,
+            #                     inline=new_inline)
+            #await interaction.edit_original_response(embed=changed)
             await self.enable_all_buttons()
             button.disabled = True
     
@@ -303,28 +311,29 @@ class EventView(View):
                                             clicked_by, n, v, i)
             return
         else:
-            changed = await EventView.del_my_one_count(origin_embed, clicked_by,
-                                            interaction.guild_id, "tentative")
-            votes:dict = await read_db(DATABASE, interaction.guild_id,
-                                        embed_hash(origin_embed))
-            if votes:
-                # update my vote as tentative
-                votes[str(clicked_by.id)] = "tentative"
-                await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                            votes)
-            else:
-                # my first vote is tentative
-                await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-                                {str(clicked_by.id): "tentative"})
-            fields = changed.fields
-            tentative = fields[EventView.TENTATIVE_FIELD_POSITION]
-            new_value = int(tentative.value)+1
-            new_name = tentative.name
-            new_inline = tentative.inline
-            changed.set_field_at(EventView.TENTATIVE_FIELD_POSITION,
-                                 value=str(new_value), name=new_name,
-                                 inline=new_inline)
-            await interaction.edit_original_response(embed=changed)
+            await EventView.do_action_no_names("tentative", origin_embed, interaction, clicked_by)
+            #changed = await EventView.del_no_name_occurance(origin_embed, clicked_by,
+            #                                interaction.guild_id, "tentative")
+            #votes:dict = await read_db(DATABASE, interaction.guild_id,
+            #                            embed_hash(origin_embed))
+            #if votes:
+            #    # update my vote as tentative
+            #    votes[str(clicked_by.id)] = "tentative"
+            #    await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
+            #                votes)
+            #else:
+            #    # my first vote is tentative
+            #    await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
+            #                    {str(clicked_by.id): "tentative"})
+            #fields = changed.fields
+            #tentative = fields[EventView.TENTATIVE_FIELD_POSITION]
+            #new_value = int(tentative.value)+1
+            #new_name = tentative.name
+            #new_inline = tentative.inline
+            #changed.set_field_at(EventView.TENTATIVE_FIELD_POSITION,
+            #                     value=str(new_value), name=new_name,
+            #                     inline=new_inline)
+            #await interaction.edit_original_response(embed=changed)
             await self.enable_all_buttons()
             button.disabled = True
     
@@ -366,7 +375,7 @@ class EventView(View):
         return emb
 
     @staticmethod
-    async def del_my_one_count(emb:Embed, usr:User, guild_id:int) -> Embed:
+    async def del_no_name_occurance(emb:Embed, usr:User, guild_id:int, type:str) -> Embed:
         """Delete's user count in any of the category in chat-posted scheduled event.
 
         Args:
@@ -381,51 +390,50 @@ class EventView(View):
             Embed: New embed without user's vote
         """
         votes = await read_db(DATABASE, guild_id, embed_hash(emb))
-        emb_fields = emb.fields
         try:
             user_vote = votes[str(usr.id)]
         except KeyError:
             return emb
+        
         if user_vote == "sign":
-            sign = emb_fields[EventView.SIGN_IN_FIELD_POSITION]
-            new_value = sign.value
-            name = sign.name
-            inline = sign.inline
-            # we subtract our vote
-            new_value = int(new_value)-1
-            # if undershoot
-            if new_value <= 0:
-                new_value = "0"
-            # modify the embed and return it
-            emb.set_field_at(EventView.SIGN_IN_FIELD_POSITION,
-                            name=name,
-                            value=str(new_value),
-                            inline=inline)
-            return emb
+           return await EventView._del_no_name_occurance(emb, EventView.SIGN_IN_FIELD_POSITION,
+                                              votes, guild_id, usr)
         elif user_vote == "decline":
-            decline = emb_fields[EventView.DECLINED_FIELD_POSITION]
-            new_value = decline.value
-            name = decline.name
-            inline = decline.inline
-            new_value = int(new_value)-1
-            if new_value <= 0:
-                new_value = "0"
-            emb.set_field_at(EventView.DECLINED_FIELD_POSITION,
-                            name=name,
-                            value=str(new_value),
-                            inline=inline)
-            return emb
+           return await EventView._del_no_name_occurance(emb, EventView.DECLINED_FIELD_POSITION,
+                                              votes, guild_id, usr)
         elif user_vote == "tentative":
-            tentative = emb_fields[EventView.TENTATIVE_FIELD_POSITION]
-            new_value = tentative.value
-            name = tentative.name
-            inline = tentative.inline
-            new_value = int(new_value)-1
-            if new_value <= 0:
-                new_value = "0"
-            emb.set_field_at(EventView.TENTATIVE_FIELD_POSITION,
-                            name=name,
-                            value=str(new_value),
-                            inline=inline)
-            return emb
+            return await EventView._del_no_name_occurance(emb, EventView.TENTATIVE_FIELD_POSITION,
+                                              votes, guild_id, usr)
         raise ValueError("Bad argument value of user event vote.")
+    
+    @staticmethod
+    async def _del_no_name_occurance(embed:Embed, position:str, votes:dict, guid:int, user:User):
+        """Helper method of del_no_name_occurance for code readability.
+
+        Args:
+            embed (Embed): Embed of the event
+            position (str): Position of the field based by the action
+            votes (dict): All votes of the event
+            guid (int): Guild id of the event
+            user (User): User performed operation
+
+        Returns:
+            Embed: Modified embed without user's vote occurance.
+        """
+        emb_fields = embed.fields
+        
+        action = emb_fields[position]
+        new_value = action.value
+        name = action.name
+        inline = action.inline
+        # bug in line below ?
+        new_value = int(new_value)-1 if votes.get(str(user.id)) else new_value
+        if new_value <= 0:
+            new_value = "0"
+        embed.set_field_at(position,
+                        name=name,
+                        value=str(new_value),
+                        inline=inline)
+        del votes[str(user.id)]
+        await update_db(DATABASE, guid, embed_hash(embed), votes)
+        return embed
