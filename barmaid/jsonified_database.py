@@ -1,6 +1,7 @@
 import asyncio
 import json
 import aiofiles
+from functools import wraps
 
 DATABASE = "data.json"
 
@@ -8,6 +9,19 @@ READ_FLAG = "r"
 WRITE_FLAG = "w"
 READ_WRITE_FLAG = "rw"
 
+def async_cache(func):
+    cache = {}
+    
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        key = str(args) + str(kwargs)
+        
+        if key not in cache:
+            cache[key] = await func(*args, **kwargs)
+        return cache[key]
+    return wrapper
+
+@async_cache
 async def open_file(file_name:str) -> dict:
     """Opens json file and returns it as dict object.
 
@@ -26,6 +40,7 @@ async def open_file(file_name:str) -> dict:
         raise OSError(e)
     return json_as_dict
 
+@async_cache
 async def flush_file(file_name:str, data:dict) -> str:
     """Flushes dict obj into json file
 
@@ -45,7 +60,8 @@ async def flush_file(file_name:str, data:dict) -> str:
     except OSError as e:
         # logging add(e)
         raise OSError(e)
-    
+
+@async_cache   
 async def read_db(file_name:str, id:int, key:str):
     """Reads the value corresponding by key in the database by given
      id (guild | member) searched by.
@@ -65,7 +81,8 @@ async def read_db(file_name:str, id:int, key:str):
         return value_by_key
     except KeyError as e:
         return None
-    
+
+@async_cache   
 async def read_id(file_name:str, id:int):
     """Reads all corresponding data to id in specified database
 
@@ -86,6 +103,7 @@ async def read_id(file_name:str, id:int):
     except KeyError as e:
         return None
 
+@async_cache
 async def update_db(file_name:str, id:int, key:str, new_value):
     """Updates existing key-pair in the database stored by id (guild | member).
     If no such key exists, the key is added and asigned with new_value.
@@ -116,7 +134,8 @@ async def update_db(file_name:str, id:int, key:str, new_value):
     
     result = await flush_file(file_name, new_data)
     return result
-    
+
+@async_cache   
 async def insert_db(file_name:str, id:int, key:str, value) -> str:
     """Inserts new key into the database with its value.
     If key already exists, returns None.
@@ -142,6 +161,7 @@ async def insert_db(file_name:str, id:int, key:str, value) -> str:
     result = await flush_file(file_name, to_save)
     return result
 
+@async_cache
 async def delete_from_db(file_name:str, id:int, key:str) -> str:
     """Deletes existing key-pair in json file. When nothing to delete, 
     returns None.
@@ -168,6 +188,7 @@ async def delete_from_db(file_name:str, id:int, key:str) -> str:
     result = await flush_file(file_name, to_save)
     return result
 
+@async_cache
 async def add_id(file_name:str, id:int) -> str:
     """Adds new id into database.
 
@@ -186,6 +207,7 @@ async def add_id(file_name:str, id:int) -> str:
     result = await flush_file(file_name, to_save)
     return result
 
+@async_cache
 async def id_lookup(file_name:str, id:int) -> int:
     """Looks up for id in the specified json.
 
