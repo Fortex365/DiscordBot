@@ -26,6 +26,58 @@ Should be able to create a event on server and manage it for the server. (Sign i
 Next, it should be a tool of some kind for administators on the server, which they can use to mass message everyone on the server, mass member movement, and last but not least - manage the rules for the server.
 Lastly, what bot could do is to stream music via Voice Channels on server passed by URL eg. Spotify, Youtube.
 ```
+
+# To host bot on your own
+Make sure your machine's running `Python 3.9+`, you can download it [here](https://www.python.org/).
+To quickly check whether you've Python installed:
+```
+python --version
+```
+To install any requirements needed:
+```
+python pip install requirements.txt
+```
+Visit [Discord Developer Portal](https://discord.com/developers/applications) and create new application there and save it's  `token`. KEEP IT SECRET!
+
+For Mac:
+```
+export DISCORD_BOT_TOKEN=your_token_here
+```
+For Linux:
+```
+export DISCORD_BOT_TOKEN=your_token_here
+```
+For Windows [little more for that here](https://phoenixnap.com/kb/windows-set-environment-variable):
+```
+setx DISCORD_BOT_TOKEN="your_token_here"
+```
+Once again from [Discord Developer Portal](https://discord.com/developers/applications) create an invitation link to add your bot to discord servers. `Give it administator and select scope to application.commands.` Copy generated invite link and fill accordingly to config.
+
+Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, BOT_ID`:
+```json
+{
+  "DeleteMessages": {
+    "DELETE_COMMAND_INVOKE": 15,
+    "DELETE_COMMAND_ERROR": 25,
+    "DELETE_EMBED_POST": 300,
+    "DELETE_EMBED_HELP": 120
+  },
+  "Activity": {
+    "CLIENT_ACTIVITY": "Your local e-Barmaid"
+  },
+  "DATABASE_FILE_NAME": "data.json",
+  "GLOBAL_NAUGHTY_LIST": "naughty_list.json",
+  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id=821538075078557707",
+  "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands",
+  "BOT_ID": 821538075078557707
+}
+```
+After you're done editting, it's time to run it!
+```
+python .\barmaid
+```
+
+
 # The default prefix bot reacts on server is `..`
 
 Example:

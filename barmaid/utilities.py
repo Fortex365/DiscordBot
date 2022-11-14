@@ -68,9 +68,10 @@ MASSDM_EXPLOIT_LIMIT = 200
 """
 Bot related stuff
 """
+BOT_ID = settings['BOT_ID']
 BOT_INVITE_URL = "https://discord.com/api/oauth2/authorize?client_id=" \
-    "821538075078557707&permissions=8&scope=bot%20applications.commands"
-BOT_AUTH_HEADER = "https://discord.com/oauth2/authorize?client_id=821538075078557707"
+    F"{BOT_ID}&permissions=8&scope=bot%20applications.commands"
+BOT_AUTH_HEADER = f"https://discord.com/oauth2/authorize?client_id={BOT_ID}"
 
 """
 Utility functions
