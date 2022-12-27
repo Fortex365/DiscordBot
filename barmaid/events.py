@@ -210,10 +210,10 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     emb.add_field(name=sign_up_string, value=default_unknown_value, inline=True)
     emb.add_field(name="Declined❌", value=default_unknown_value, inline=True)
     emb.add_field(name="Tentative❔", value=default_unknown_value, inline=True)
-    emb.add_field(name="Calendar", value="N/A", inline=False)
+    #emb.add_field(name="Calendar", value="N/A", inline=False)
     emb.set_footer(text=f"{hash}, {include_names}, {lim}")
     
-    ok = await insert_db(DATABASE, ctx.guild.id, hash, {})
+    ok = await insert_db(DATABASE, ctx.guild.id, hash, {"author": ctx.author.id})
     if not ok:
         await ctx.send("Something has failed. Try again later.", 
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -249,28 +249,37 @@ async def setup_notification(ctx:Context, emb:Embed, message_id:int, time:str):
     event_name = emb.fields[NAME_FIELD_POSITION].value
     original_time = datetime.strptime(iso_time_format, ISO_FORMAT)
     fifteen_mins_before = original_time - timedelta(minutes=15)
-    time_now = datetime.utcnow() + timedelta(hours=2)
+    time_now = datetime.utcnow() + timedelta(hours=1) # CZ is UTC+1
     to_wait = fifteen_mins_before - time_now
     if time_now > fifteen_mins_before:
         return
     await ctx.send(f"Notifications was set 15 minutes ahead successfully!",
                     delete_after=S.DELETE_COMMAND_INVOKE)
     
-    # Notify in the channel
+    # wait the desired time
     await asyncio.sleep(to_wait.seconds)
-    await ctx.send(f"@here Event `{event_name}` starting soon!",
-                delete_after=S.DELETE_COMMAND_INVOKE)
     
-    # Notify the signed up members
+    # only notify if the event wasnt cancelled
     new_updated_message = await ctx.fetch_message(message_id)
     new_updated_embed = new_updated_message.embeds[0]
-    sign_field = new_updated_embed.fields[4]
-    mentions = sign_field.value
-    trick_to_get_mentions_in_list = await ctx.send(content=mentions)
-    await trick_to_get_mentions_in_list.delete()
-    user_mentions = trick_to_get_mentions_in_list.mentions
-    for u in user_mentions:
-        await u.send(f"Event `{event_name}` on `{ctx.guild.name}` is starting soon!")
+    event_name = new_updated_embed.fields[0]
+    if not "Cancelled: " in event_name.value:
+    
+        # Notify in the channel
+        await ctx.send(f"@here Event `{event_name.value}` starting soon!",
+                    delete_after=S.DELETE_COMMAND_INVOKE)
+        
+        # Notify the signed up members
+        #new_updated_message = await ctx.fetch_message(message_id)
+        #new_updated_embed = new_updated_message.embeds[0]
+        
+        name_field = new_updated_embed.fields[4]
+        mentions = name_field.value
+        trick_to_get_mentions_in_list = await ctx.send(content=mentions)
+        await trick_to_get_mentions_in_list.delete()
+        user_mentions = trick_to_get_mentions_in_list.mentions
+        for u in user_mentions:
+            await u.send(f"Event `{event_name.value}` on `{ctx.guild.name}` is starting soon!")
                   
 async def setup(target: commands.Bot):
     """Setup function which allows this module to be

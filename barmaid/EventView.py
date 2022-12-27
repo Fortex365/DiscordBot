@@ -149,8 +149,11 @@ class EventView(View):
         new_value = int(action.value)
         
         if type == "sign":
-            text = new_name.split(" ")
-            limit = text[2]
+            try:
+                text = new_name.split(" ")
+                limit = text[2]
+            except IndexError:
+                limit = "9999"
             limit_value = int(limit.removesuffix(")"))
             if not new_value == limit_value:
                 await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
@@ -198,6 +201,9 @@ class EventView(View):
                 limit = text[1]
                 limit_values = limit.split("/")
                 add_my_count = int(limit_values[0])+1
+                if add_my_count > int(limit_values[1]):
+                    # there is no sign-in limit left for me
+                    return
                 add_my_count = limit_values[1] if add_my_count > int(limit_values[1]) else add_my_count
                 n = "Sign-ups✅ " + str(add_my_count) + "/" + limit_values[1]
                 
@@ -208,28 +214,6 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("sign", origin_embed, interaction, clicked_by)
-            #changed = await del_my_one_count(origin_embed, clicked_by,
-            #                                interaction.guild_id, "sign")
-            #votes:dict = await read_db(DATABASE, interaction.guild_id,
-            #                            embed_hash(origin_embed))
-            #if votes:
-            #    # update my vote as signed
-            #    votes[str(clicked_by.id)] = "sign"
-            #    await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-            #                votes)
-            #else:
-            #    # my first vote is signed
-            #    await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-            #                    {str(clicked_by.id): "sign"})
-            #fields = changed.fields
-            #sign = fields[EventView.SIGN_IN_FIELD_POSITION]
-            #new_value = int(sign.value)+1
-            #new_name = sign.name
-            #new_inline = sign.inline
-            #changed.set_field_at(EventView.SIGN_IN_FIELD_POSITION,
-            #                     value=str(new_value), name=new_name,
-            #                     inline=new_inline)
-            #await interaction.edit_original_response(embed=changed)
             await self.enable_all_buttons()
             button.disabled = True
             
@@ -260,32 +244,10 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("decline", origin_embed, interaction, clicked_by)
-            #changed = await EventView.del_no_name_occurance(origin_embed, clicked_by,
-            #                                interaction.guild_id, "decline")
-            #votes:dict = await read_db(DATABASE, interaction.guild_id,
-            #                            embed_hash(origin_embed))
-            #if votes:
-            #    # update my vote as declined
-            #    votes[str(clicked_by.id)] = "decline"
-            #    await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-            #                votes)
-            #else:
-            #    # my first vote is declined
-            #    await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-            #                    {str(clicked_by.id): "decline"})
-            #fields = changed.fields
-            #decline = fields[EventView.DECLINED_FIELD_POSITION]
-            #new_value = int(decline.value)+1
-            #new_name = decline.name
-            #new_inline = decline.inline
-            #changed.set_field_at(EventView.DECLINED_FIELD_POSITION,
-            #                     value=str(new_value), name=new_name,
-            #                     inline=new_inline)
-            #await interaction.edit_original_response(embed=changed)
             await self.enable_all_buttons()
             button.disabled = True
     
-    @button(label="Tentative", style=ButtonStyle.secondary)
+    @button(label="Tentative", style=ButtonStyle.blurple)
     async def tentative(self, interaction: Interaction, button:Button):
         """Button for handling user input to tentative into chat-posted scheduled
         event.
@@ -312,31 +274,38 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("tentative", origin_embed, interaction, clicked_by)
-            #changed = await EventView.del_no_name_occurance(origin_embed, clicked_by,
-            #                                interaction.guild_id, "tentative")
-            #votes:dict = await read_db(DATABASE, interaction.guild_id,
-            #                            embed_hash(origin_embed))
-            #if votes:
-            #    # update my vote as tentative
-            #    votes[str(clicked_by.id)] = "tentative"
-            #    await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-            #                votes)
-            #else:
-            #    # my first vote is tentative
-            #    await insert_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
-            #                    {str(clicked_by.id): "tentative"})
-            #fields = changed.fields
-            #tentative = fields[EventView.TENTATIVE_FIELD_POSITION]
-            #new_value = int(tentative.value)+1
-            #new_name = tentative.name
-            #new_inline = tentative.inline
-            #changed.set_field_at(EventView.TENTATIVE_FIELD_POSITION,
-            #                     value=str(new_value), name=new_name,
-            #                     inline=new_inline)
-            #await interaction.edit_original_response(embed=changed)
             await self.enable_all_buttons()
             button.disabled = True
-    
+            
+    @button(label="Cancel", style=ButtonStyle.red)
+    async def cancel(self, interaction: Interaction, button:Button):
+        await interaction.response.defer()
+        clicked_by = interaction.user
+        
+        origin = await interaction.original_response()
+        origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
+        hash = embed_hash(origin_embed)
+        event = await read_db(DATABASE, interaction.guild_id, hash)
+        author_id = event["author"]
+        
+        if author_id == clicked_by.id:
+            embed_fields = origin_embed.fields
+            name_field = embed_fields[0]
+            # was already cancelled once
+            if "Cancelled: " in name_field.value:
+                return
+            cancelled_name = "Cancelled: " + name_field.value
+            time_field = embed_fields[1]
+            cancelled_time = "~~" + time_field.value + "~~"
+            origin_embed.set_field_at(0, name=name_field.name, value=cancelled_name,
+                                      inline=name_field.inline)
+            origin_embed.set_field_at(1, name=time_field.name, value=cancelled_time,
+                                      inline=time_field.inline)
+            await interaction.edit_original_response(embed=origin_embed)
+            await interaction.channel.send(f"Event `{name_field.value}` at `{time_field.value}` was cancelled by author.")
+            return
+        await interaction.followup.send("Sorry, only author of the event can cancel it.", ephemeral=True)
+          
     @staticmethod
     def del_name_occurance(emb:Embed, usr:User) -> Embed:
         """Removes user occurence in chat-posted scheduled event in one of its 
