@@ -37,6 +37,8 @@ To install any requirements needed:
 ```
 python pip install requirements.txt
 ```
+Make sure you have `FFmpeg` installed and added to the PATH enviroment variables. You can download it [here](https://www.ffmpeg.org/).
+
 Visit [Discord Developer Portal](https://discord.com/developers/applications) and create new application there and save it's  `token`. KEEP IT SECRET!
 
 For Mac:
