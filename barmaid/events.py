@@ -110,13 +110,16 @@ async def ivoice(ctx:commands.Context, title:str, description:str, start_time:st
         ctx (commands.Context): Context of invoke
         title (str): Title of event
         description (str): Description of event
-        start_time (str): Use "yy-mm-dd hh:mm:ss" format
+        start_time (str): Use "yy-mm-dd hh:mm" format
         voice_ch (VoiceChannel): Voice channel id
-        end_time (str, optional): Use "yy-mm-dd hh:mm:ss" format. Optional.
+        end_time (str, optional): Use "yy-mm-dd hh:mm" format. Optional.
     """    
     await ctx.defer(ephemeral=True)
     
     MILENIUM = "20"
+    start_time += ":00"
+    if end_time:
+        end_time = end_time + ":00"
     start = await format_time(MILENIUM+start_time)
     end = await format_time(MILENIUM+end_time) if end_time is not None else None
 
@@ -134,7 +137,7 @@ async def ivoice(ctx:commands.Context, title:str, description:str, start_time:st
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
     if resp.status == 200:
-        await ctx.send(f"Created event `{title}`", delete_after=S.DELETE_COMMAND_INVOKE)
+        await ctx.send(f"Created event `{title}` on `{start_time}", delete_after=S.DELETE_COMMAND_INVOKE)
         return
     await ctx.send(f"Event creation has failed. Try again later.", 
                    delete_after=S.DELETE_COMMAND_ERROR)
@@ -147,12 +150,13 @@ async def ilocation(ctx:commands.Context, title:str, description:str, start_time
         ctx (commands.Context): Context of invoke
         title (str): Title of event
         description (str): Description of event
-        start_time (str): Use "yy-mm-dd hh:mm:ss" format
+        start_time (str): Use "yy-mm-dd hh:mm" format. REQUIRED.
         voice_ch (VoiceChannel): Voice channel id
-        end_time (str): Use "yy-mm-dd hh:mm:ss" format. REQUIRED.
+        end_time (str): Use "yy-mm-dd hh:mm" format. REQUIRED.
     """
     await ctx.defer(ephemeral=True)
-    
+    start_time += ":00"
+    end_time += ":00"
     metadata = {"location": location}
     
     MILENIUM = "20"
@@ -173,7 +177,7 @@ async def ilocation(ctx:commands.Context, title:str, description:str, start_time
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
     if resp.status == 200:
-        await ctx.send(f"Created event `{title}`", delete_after=S.DELETE_COMMAND_INVOKE)
+        await ctx.send(f"Created event `{title}`  on `{start_time}", delete_after=S.DELETE_COMMAND_INVOKE)
         return
     await ctx.send(f"Event creation has failed. Try again later.", 
                    delete_after=S.DELETE_COMMAND_ERROR)
@@ -187,14 +191,21 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
         include_names (bool): Include names in event category lists.
         title (str): Title of event
         description (str): Description of event
-        start_time (str): Start time of event. Use yyyy-mm-dd hh:mm:ss to enable notifications.
+        start_time (str): Start time of event. Use yy-mm-dd hh:mm to enable notifications.
         voice (VoiceChannel): Voice channel
     """
-    # will be long interaction
+    # Will be long interaction
     await ctx.defer()
+    # Get rid of prefixed message in chat that invoked it
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+    # Quality of life for the input
+    MILENIUM = "20"
+    start_time += ":00"
+    start_time = MILENIUM + start_time
+    # New hash for event
     hash = uuid.uuid4().hex
+    # New event with buttons
     v = EventView()
     default_unknown_value = "N/A" if include_names else "0"
     sign_up_string = f"Sign-ups✅ 0/{limit}" if limit > 0 and include_names else "Sign-ups✅"
@@ -202,7 +213,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     lim = True if limit > 0 else False
     
     emb = Embed()
-    emb.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
+    emb.set_author(name=f"by: {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
     emb.add_field(name="Name", value=title, inline=True)
     emb.add_field(name="Date", value=start_time, inline=True)
     emb.add_field(name="Description", value=description, inline=True)
@@ -210,6 +221,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     emb.add_field(name=sign_up_string, value=default_unknown_value, inline=True)
     emb.add_field(name="Declined❌", value=default_unknown_value, inline=True)
     emb.add_field(name="Tentative❔", value=default_unknown_value, inline=True)
+    emb.add_field(name="\x1D"*10, value="\x1D"*10, inline=True)
     #emb.add_field(name="Calendar", value="N/A", inline=False)
     emb.set_footer(text=f"{hash}, {include_names}, {lim}")
     

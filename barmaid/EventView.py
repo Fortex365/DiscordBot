@@ -174,7 +174,7 @@ class EventView(View):
                                 inline=new_inline)
         await interaction.edit_original_response(embed=changed)  
         
-    @button(label="Accept", style=ButtonStyle.green)
+    @button(label="Accept", style=ButtonStyle.gray, emoji="✔")
     async def sign_in(self, interaction: Interaction, button:Button):
         """Button for handling user input to sign into chat-posted scheduled
         event.
@@ -217,7 +217,7 @@ class EventView(View):
             await self.enable_all_buttons()
             button.disabled = True
             
-    @button(label="Decline", style=ButtonStyle.red)
+    @button(label="Decline", style=ButtonStyle.gray, emoji="✖")
     async def decline(self, interaction: Interaction, button:Button):
         """Button for handling user input to decline into chat-posted scheduled
         event.
@@ -247,7 +247,7 @@ class EventView(View):
             await self.enable_all_buttons()
             button.disabled = True
     
-    @button(label="Tentative", style=ButtonStyle.blurple)
+    @button(label="Tentative", style=ButtonStyle.gray, emoji="➖")
     async def tentative(self, interaction: Interaction, button:Button):
         """Button for handling user input to tentative into chat-posted scheduled
         event.
@@ -277,7 +277,7 @@ class EventView(View):
             await self.enable_all_buttons()
             button.disabled = True
             
-    @button(label="Cancel", style=ButtonStyle.red)
+    @button(label="Cancel", style=ButtonStyle.gray, emoji="⚙")
     async def cancel(self, interaction: Interaction, button:Button):
         await interaction.response.defer()
         clicked_by = interaction.user

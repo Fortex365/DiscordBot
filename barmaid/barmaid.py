@@ -26,6 +26,7 @@ EXTENSIONS = [
     "admin_tools",
     "minigames",
     "events",
+    "music",
 ]
 
 async def get_prefix(client:commands.Bot, message:Message):

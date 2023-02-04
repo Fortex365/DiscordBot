@@ -5,3 +5,6 @@ barmaid/data.json
 barmaid/data.json
 *.pyc
 barmaid/playground.py
+barmaid/test.py
+barmaid/ffmpeg/
+barmaid/ffmpeg.exe

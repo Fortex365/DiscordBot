@@ -107,15 +107,15 @@ async def test():
     #Timestamps must be ahead of time
     e = await ScheduledEvents.create_guild_event(907946271946440745,
                                                  "New Year!",
-                                                 "PF2023", "2022-12-31T23:00:00",
-                                                 "2022-12-31T23:59:59",
+                                                 "PF2023", "202-12-31T23:00:00",
+                                                 "2023-12-31T23:59:59",
                                                  {"location":"Home with Family"})
     
     
 if __name__ == "__main__":
     """In case of trying to execute this module, nothing should happen.
     """
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.run_until_complete(test())
     
 """ 
