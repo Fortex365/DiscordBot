@@ -315,7 +315,3 @@ if __name__ == "__main__":
     """
     pass
 
-"""
-TO DO:
-implement add to calendar for events
-"""

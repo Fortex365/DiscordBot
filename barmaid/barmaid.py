@@ -59,18 +59,6 @@ TREE = CLIENT.tree
 log_handle:logging.Logger = setup_logging()
 
 @CLIENT.event
-async def on_reaction_add(reaction:Reaction, who_clicked:Union[Member, User]):
-    """WIP THIS IS JUST A TEST 
-    """    
-    msg:Message = reaction.message
-    
-    if msg.guild:
-        if who_clicked.bot:
-            return
-        if reaction.emoji in ["📝","❌", "🤷‍♀️"]:
-            await msg.channel.send(f"{who_clicked.name} reacted {reaction.emoji}")
-
-@CLIENT.event
 async def on_ready():
     """Initialization function to set some bot states, after it's bootup.
     """    

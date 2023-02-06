@@ -406,3 +406,13 @@ class EventView(View):
         del votes[str(user.id)]
         await update_db(DATABASE, guid, embed_hash(embed), votes)
         return embed
+    
+if __name__ == "__main__":
+    """In case of trying to execute this module, nothing should happen.
+    """
+    pass
+   
+"""
+TO DO:
+disable interaction when event's cancelled
+"""
