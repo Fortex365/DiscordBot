@@ -125,13 +125,11 @@ You can modify this data to your own liking:
 
 - admin [message, embedded]
 
-- ban, kick
+- ban, kick, naughty
 
 - invite, bot
 
 - events [ivoice, ilocation, echat]
-
-- echo
 
 - filter [show, remove, add]
 
@@ -139,7 +137,7 @@ You can modify this data to your own liking:
 
 - move
 
-- ping, id, guid
+- ping, id, guid, echo
 
 - prefix, setprefix
 
