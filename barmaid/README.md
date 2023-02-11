@@ -121,7 +121,7 @@ You can modify this data to your own liking:
 
 - autorole [show, remove, set]
 
-- play, play-playlist, pause, stop, resue, volume, queue
+- play, play-playlist, pause, stop, resume, volume, queue
 
 - admin [message, embedded]
 
