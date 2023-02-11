@@ -104,7 +104,9 @@ Can look something like this:
     "DELETE_EMBED_HELP": 120
   },
   "Activity": {
-    "CLIENT_ACTIVITY": "Your local e-Barmaid"
+    "CLIENT_ACTIVITY": ["Your Barmaid!",
+     "Serving drinks!",
+      "Local Pub."]
   }
 }
 ```
@@ -113,7 +115,7 @@ You can modify this data to your own liking:
 - "DELETE_COMMAND_ERROR" - Regular error message (respond to command) until its deletion. *Number: time in seconds.*
 - "DELETE_EMBED_POST" - Important message (respond to command, announce etc.) until its deletion. *Number: time in seconds.*
 - "DELETE_EMBED_HELP" - Command help message until its deletion. *Number: time in seconds.*
-- "CLIENT_ACTIVITY" - Activity bot is showing up as "Playing now". (Cannot be per server.) *String: a sequance beginning and ending with ".*
+- "CLIENT_ACTIVITY" - Activity bot is showing up as "Playing now". (Cannot be per server.) *List: containing several strings".*
 
 # Overview of commands:
 
