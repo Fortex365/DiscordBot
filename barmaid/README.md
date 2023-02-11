@@ -115,63 +115,31 @@ You can modify this data to your own liking:
 - "DELETE_EMBED_HELP" - Command help message until its deletion. *Number: time in seconds.*
 - "CLIENT_ACTIVITY" - Activity bot is showing up as "Playing now". (Cannot be per server.) *String: a sequance beginning and ending with ".*
 
-# Module `events.py`
+# Overview of commands:
 
-List of all commands in the module:
+- rules, addrule, delrule, reset-rules
 
-- `event` - create event into discord intergrated events
-  - `event simple` - create not integrated dc events, but embed message type
+- autorole [show, remove, set]
 
-# Module `admin_tools.py`
-List of all commands in this module:
+- play, play-playlist, pause, stop, resue, volume, queue
 
-- `ping` - Outputs the ping between the client and the server.
-- `clear` - Clears the number of messages in the channel. *Permission required.*
-- `id` Sends the discord member number identificator to direct message. *Permission required.*
-- `echo` - Echoes the message.
-- `guid` - Sends guild identification number to direct message. *Permission required.*
-- `prefix` - Responds with the current prefix is set on the server.
+- admin [message, embedded]
 
-  - `setprefix` - Sets the new prefix for the server. *Permission required.*
-- `kick` - Kicks the user from the server. *Permission required.*
+- ban, kick
 
-  Example:
-  ```
-  <prefix>kick @user
-  >>> Kicked @user! Reason: No reason provided 
+- invite, bot
 
-  By: @user
-  ```
-  - `kick more` - mentions multiple users to kick
-- `ban` - Bans the user from the server. *Permission required.*
-  - `ban more` - Bans multiple users
-- `move` - Moves all connected members from channel1 to channel2. *Permission required.*
-  - `move users` - move multiple mentioned people
-  - `move help` - Gives you help for the command.
-- `massdm` - Sends direct message to all server members. *Disclaimer: owner only, small servers only.* Otherwise it would be against Discord ToS (spam, phishing).
-  - `massdm embed` - allows to send embed message
-- `rules` - Shows the server enforced rules. Rules are sent for each member who joins the server.
-  - `rules set` - Set the new rules. *Permissions required.*
-- `invite` - Allows you share bot with your friends.
-- `finvite` - Allows you easily to invite friends to your server.
-  - `finvite help` - Help for command usage.
-- `autorole` - Set the role to auto-asign when new member joins server.
-  - `autorole help` - Help for command usage.
-  - `autorole set` - Set the role to asign.
-  - `autorole remove` - Remove role to asign.
-- `filter` - Gets blacklisted words on a server
-  - `filter add` - adds new words to blacklist
-  - `filter remove` - removes word from blacklist
+- events [ivoice, ilocation, echat]
 
+- echo
 
+- filter [show, remove, add]
 
+- moderation [show, add, reset]
 
-## Module `minigames.py`
-List of all commands in this module:
+- move
 
-- `deathroll` - Play a deathroll game.
-    - `deathroll rules` - Show the rules for the game
+- ping, id, guid
 
+- prefix, setprefix
 
-- `git` - Play the pseudo-git game. *Does nothing interesting.*
-    - `git push` - Explore yourself.
