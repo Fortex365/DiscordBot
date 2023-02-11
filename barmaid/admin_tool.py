@@ -6,18 +6,20 @@ from discord import Interaction, SelectOption, File, Button
 from discord.ext import commands
 from discord.ext.commands import errors
 
-import utilities as S
-from utilities import NAUGHTY
-from utilities import delete_command_user_invoke, database_fail
-from jsonified_database import delete_from_db, id_lookup, insert_db, read_db 
-from jsonified_database import update_db, add_id, read_id
+import data.utilities as S
+from data.utilities import NAUGHTY_DB
+from data.utilities import delete_command_user_invoke, database_fail
+from data.jsonified_database import delete_from_db, id_lookup, insert_db, read_db 
+from data.jsonified_database import update_db, add_id, read_id
+from log.error_log import setup_logging
 
 from barmaid import CLIENT, DATABASE
+log = setup_logging()
 
 @commands.hybrid_group(with_app_command=True, name="h")
 @commands.guild_only()      
 async def helpme(ctx:commands.Context):
-    """Gets help for a specified command
+    """Gets help for a specified command.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -97,7 +99,7 @@ async def clear_error(ctx:commands.Context, error:errors):
 @commands.hybrid_command(name="id",
                          with_app_command=True)
 async def id(ctx:commands.Context):
-    """Sends your discord identificator number.
+    """Sends you your discord identificator number.
     
     Args:
     ctx: Current context of the message that invoked the command.
@@ -126,7 +128,7 @@ async def invoker_id_error(ctx:commands.Context, error:errors,):
                          aliases=["repeat"],
                          with_app_command=True)
 async def echo(ctx:commands.Context, *, message:str=None):
-    """Echoes the message the command is invoked with.
+    """Echoes the message.
 
     Args:
         ctx: Context of the invoked command.
@@ -159,7 +161,7 @@ async def echo_error(ctx:commands.Context, error:errors):
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def guid(ctx:commands.Context):
-    """Sends your discord server id identificator number.
+    """Sends you your discord server identification number.
 
     Args:
         ctx: Context deducted from invocation.
@@ -208,7 +210,7 @@ def _check_prefix(prefix:str):
                          with_app_command=True)
 @commands.guild_only()
 async def prefix(ctx:commands.Context):
-    """Prefix used in discord server.
+    """Shows prefix used on a server.
 
     Args:
         ctx (commands.Context): Context of command invocation
@@ -240,7 +242,7 @@ async def prefix_error(ctx:commands.Context, error:errors):
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def setprefix(ctx:commands.Context, new_prefix:str=None):
-    """Sets new prefix for discord server.
+    """Sets a new prefix on a server.
 
     Args:
         ctx (commands.Context): Context of command invocation
@@ -286,7 +288,7 @@ async def setprefix_error(ctx:commands.Context, error:errors):
 async def kick(ctx:commands.Context,
                    members:commands.Greedy[Member]=None, *,
                    reason:str="No reason provided"):
-    """Kicks multiple users from discord server.
+    """Kicks multiple user(s) from server.
 
     Args:
         ctx (commands.Context): Context of command invocation
@@ -363,16 +365,16 @@ async def add_to_naughty_list(member:int, guild:Guild, reason:str):
         guild (Guild): Guild banned from
         reason (str): Guild reason banned for
     """    
-    exists = await id_lookup(NAUGHTY, member)
+    exists = await id_lookup(NAUGHTY_DB, member)
     if not exists:
-        await add_id(NAUGHTY, member)
+        await add_id(NAUGHTY_DB, member)
         
     info_about_ban = {
         "guild_name": guild.name,
         "reason": reason
     }
-    if not await insert_db(NAUGHTY, member, guild.id, info_about_ban):
-        await update_db(NAUGHTY, member, guild.id, info_about_ban)
+    if not await insert_db(NAUGHTY_DB, member, guild.id, info_about_ban):
+        await update_db(NAUGHTY_DB, member, guild.id, info_about_ban)
       
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
@@ -380,7 +382,7 @@ async def add_to_naughty_list(member:int, guild:Guild, reason:str):
 @commands.bot_has_guild_permissions(administrator = True)
 async def ban(ctx:commands.Context, members:commands.Greedy[Member]=None, *,
               reason:str ="No reason provided", del_msg_in_days:int = 1):
-    """Bans the user from the server deducted from the context.
+    """Bans the user(s) from the server.
 
     Args:
         ctx (discord.Context): Context of the invoked command.
@@ -463,13 +465,13 @@ async def naugty(ctx:commands.Context, member:Member):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    exists = await id_lookup(NAUGHTY, member.id)
+    exists = await id_lookup(NAUGHTY_DB, member.id)
     if not exists:
         await ctx.send(f"Discord User: {member} has no records.",
                  delete_after=S.DELETE_COMMAND_INVOKE)
         return
     
-    data = await read_id(NAUGHTY, member.id)
+    data = await read_id(NAUGHTY_DB, member.id)
     data_items = data.items()
     message = f"User {member} has  `{len(data_items)}` records:\n>>> "
     for _, server_info in data_items:
@@ -485,7 +487,7 @@ async def naugty(ctx:commands.Context, member:Member):
 @commands.has_guild_permissions(move_members=True)
 async def move(ctx:commands.Context, destination:VoiceChannel=None,
                members:commands.Greedy[Member]=None, *, reason:str=None):
-    """Provides control to move all members of one channel into other channel.
+    """Moves user(s) into targeted voice channel.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -547,7 +549,7 @@ async def move_help(ctx:commands.Context):
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def massdm(ctx:commands.Context):
-    """Allows owner of server to mass message privately all of its members.
+    """Server owner can message all of it's members into DM.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -556,7 +558,7 @@ async def massdm(ctx:commands.Context):
 
 @massdm.command()
 async def message(ctx:commands.Context, *, message:str):
-    """Send message to all server members. *SERVER-OWNER ONLY*
+    """Sends message to all server members. *SERVER-OWNER ONLY*
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -606,7 +608,7 @@ async def massdm_error(error:errors, ctx:commands.Context):
 @massdm.command()
 async def embedded(ctx:commands.Context, message:str, footer:str, 
                   color:str="0x00fefe"):
-    """Send embedded message to all server members. *SERVER-OWNER ONLY*
+    """Sends embedded message to all server members. *SERVER-OWNER ONLY*
 
     Args:
         ctx (commands.Context): Context of command invocation
@@ -649,7 +651,7 @@ async def embedded(ctx:commands.Context, message:str, footer:str,
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
 async def rules(ctx:commands.Context):
-    """Shows discord server rules.
+    """Shows rules on a server.
 
     Args:
         ctx (commands.Context): Context of command invocation
@@ -673,7 +675,7 @@ async def rules(ctx:commands.Context):
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def addrule(ctx:commands.Context, *, new_rule:str):
-    """Allows to set rules for server which are sent to new joined members.
+    """Allows to append new rules. They're sent to new users on server.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -701,7 +703,7 @@ async def addrule(ctx:commands.Context, *, new_rule:str):
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def rules_reset(ctx:commands.Context):
-    """Resets all discord server rules.
+    """Resets all rules on server.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -781,10 +783,10 @@ async def delrule_error(ctx:commands.Context, error:errors):
         return
     raise error
     
-@commands.hybrid_command(with_app_command=True,
+@commands.hybrid_command(with_app_command=True, name="bot",
                          aliases=["invitebot", "botinvite", "boturl", "urlbot"])
-async def invite(ctx:commands.Context):
-    """Bot invitation link to add bot elsewhere.
+async def binvite(ctx:commands.Context):
+    """Invitation link to add bot elsewhere.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -797,11 +799,11 @@ async def invite(ctx:commands.Context):
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
 @commands.guild_only()
-@commands.hybrid_command(with_app_command=True,
+@commands.hybrid_command(with_app_command=True, name="invite",
                 aliases=["invitef", "invitefriend", "finv", "invf"])
 async def finvite(ctx:commands.Context, kick_after_dc:bool=False,
                   age:int=0, use:int=0):
-    """Generates new server invite for your friends.
+    """Generates server invite for your friends.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -839,8 +841,7 @@ async def finvite_help(ctx:commands.Context):
 @commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
 async def autorole(ctx:commands.Context):
-    """Provides auto role managing by bot for those who join server. Responds
-    with set role
+    """Shows current role set for auto-giving for newly server joins.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -849,8 +850,7 @@ async def autorole(ctx:commands.Context):
 
 @autorole.command()
 async def show(ctx:commands.Context):
-    """Provides auto role managing by bot for those who join server. Responds
-    with set role
+    """Shows current role set for auto-giving for newly server joins.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -952,7 +952,7 @@ async def autorole_help(ctx:commands.Context):
 @commands.guild_only()
 @commands.has_guild_permissions(manage_messages=True)
 async def filter(ctx:commands.Context):
-    """Filter group command. Cannot be invoked on its own via slash commands.
+    """Filter group command.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -981,7 +981,7 @@ async def show(ctx:commands.Context):
   
 @filter.command()
 async def add(ctx:commands.Context, *, words:str):
-    """Adds new word to blacklist.
+    """Adds new word to blacklist. Or whole sentence if inside double quotes.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -1003,7 +1003,7 @@ async def add(ctx:commands.Context, *, words:str):
 
 @filter.command()
 async def remove(ctx:commands.Context, *, words_to_del:str):
-    """Removes specified word from blacklist.
+    """Removes specified word (sentence) from blacklist.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -1059,7 +1059,7 @@ async def mods_to_notify(ctx:commands.Context):
 
 @mods_to_notify.command()
 async def show(ctx:commands.Context):
-    """Shows which guild users bot treats as guild mods.
+    """Shows which members bot treats as guild moderators.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -1080,7 +1080,7 @@ async def show(ctx:commands.Context):
     
 @mods_to_notify.command()
 async def add(ctx:commands.Context, member:Member):
-    """Adds to bot new member to treat as a guild mod.
+    """Adds member to be treated as guild moderator.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -1101,7 +1101,7 @@ async def add(ctx:commands.Context, member:Member):
 
 @mods_to_notify.command()
 async def reset(ctx:commands.Context):
-    """Resets mods to zero.
+    """Resets moderators back to zero.
 
     Args:
         ctx (commands.Context): Context of invoke
@@ -1139,7 +1139,7 @@ async def setup(target: commands.Bot):
                 ping, clear, id,
                 prefix, setprefix, ban,
                 kick, echo, guid,
-                invite, finvite, autorole, 
+                binvite, finvite, autorole, 
                 massdm, rules, addrule, 
                 filter, helpme, move, 
                 rules_reset, delrule, naugty,

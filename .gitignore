@@ -11,3 +11,4 @@ barmaid/ffmpeg.exe
 barmaid/_asyncio_threads_test.py
 barmaid/_playground.py
 barmaid/_save.py
+__pycache__/

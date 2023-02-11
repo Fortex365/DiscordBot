@@ -2,7 +2,10 @@ import json
 import os
 import asyncio
 import aiohttp
-from utilities import BOT_AUTH_HEADER
+from data.utilities import BOT_AUTH_HEADER
+from log.error_log import setup_logging
+
+log = setup_logging()
 
 class ScheduledEvents:
     """Class connected to discord endpoint via http to communicate with it.
@@ -43,8 +46,9 @@ class ScheduledEvents:
                     response.raise_for_status()
                     assert response.status == 200
                     response_list = json.loads(await response.read())
+                    log.info(f"Get success: to {ENDPOINT_URL}")
             except Exception as e:
-                print(f"EXCEPTION: {e}")
+                log.warning(f"Get error: to {ENDPOINT_URL} as {e}")
             finally:
                 await session.close()
         return response_list
@@ -91,8 +95,9 @@ class ScheduledEvents:
                 async with session.post(ENDPOINT_URL, data=event_data) as response:
                     response.raise_for_status()
                     assert response.status == 200
+                    log.info(f"Post success: to {ENDPOINT_URL}")
             except Exception as e:
-                print(f"EXCEPTION: {e}")
+                log.warning(f"Post error: to {ENDPOINT_URL} as {e}")
                 await session.close()
                 return
         

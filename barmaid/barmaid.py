@@ -7,13 +7,13 @@ from typing import Union
 from discord import Member, Intents, Game, Status, Reaction
 from discord import Role, Guild, Embed, Colour, User
 from discord.message import Message
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import Context
 
-import utilities as S
-from utilities import DATABASE, NAUGHTY
-from jsonified_database import id_lookup, insert_db, read_db, add_id, read_id
-from error_log import setup_logging
+import data.utilities as S
+from data.utilities import DATABASE, NAUGHTY_DB, CLIENT_ACTIVITY
+from data.jsonified_database import id_lookup, insert_db, read_db, add_id, read_id
+from log.error_log import setup_logging
 from re import search
 
 # Intents manages some level of permissions bot can do
@@ -23,9 +23,8 @@ INTENTS.message_content, INTENTS.reactions = True, True
 
 # Modules to be loaded into client
 EXTENSIONS = [
-    "admin_tools",
-    "minigames",
-    "events",
+    "admin_tool",
+    "events.event",
     "music",
 ]
 
@@ -62,9 +61,18 @@ log_handle:logging.Logger = setup_logging()
 async def on_ready():
     """Initialization function to set some bot states, after it's bootup.
     """    
-    await CLIENT.change_presence(status=Status.idle,
-        activity=Game(name=S.CLIENT_ACTIVITY, start=datetime.now()))
+    await CLIENT.change_presence(status=Status.dnd,
+        activity=Game(name="Booting..", start=datetime.now()))
     print("Online.")
+    await asyncio.sleep(5)
+    change_status.start()
+
+@tasks.loop(seconds=10)
+async def change_status():
+    status = next(CLIENT_ACTIVITY)
+    await CLIENT.change_presence(
+        activity=Game(status)
+    )
 
 @CLIENT.event
 async def on_guild_join(guild:Guild):
@@ -101,7 +109,7 @@ async def on_member_join(member:Member):
 async def aware_of_naughty(member:Member, guild:Guild):
     mods_id = await read_db(DATABASE, guild.id, "mods_to_notify")
     mods = [guild.get_member(id) for id in mods_id]
-    naughty = await read_id(NAUGHTY, member.id)
+    naughty = await read_id(NAUGHTY_DB, member.id)
     naugty_items = naughty.items()
     
     for m in mods:
@@ -184,7 +192,7 @@ async def check_if_naughty(member:Member):
     Returns:
         bool: True if naughty, False if not
     """
-    is_naughty = await id_lookup(NAUGHTY, member.id)
+    is_naughty = await id_lookup(NAUGHTY_DB, member.id)
     if is_naughty:
         return True
     return False

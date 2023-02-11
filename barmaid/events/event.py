@@ -2,11 +2,11 @@ import asyncio
 from datetime import datetime, timedelta
 import uuid
 
-from jsonified_database import insert_db, read_db, update_db
-import utilities as S
-from utilities import DATABASE, delete_command_user_invoke
-from EventView import EventView
-from scheduled_events import ScheduledEvents
+from data.jsonified_database import insert_db, read_db, update_db
+import data.utilities as S
+from data.utilities import DATABASE, delete_command_user_invoke
+from events.EventView import EventView
+from events.scheduled_events import ScheduledEvents
 
 from discord import Embed, Member, channel, Invite
 from discord import Role, Guild, VoiceChannel, Reaction, User, Object
@@ -15,6 +15,8 @@ from discord.message import Message
 
 from discord.ext import commands
 from discord.ext.commands import Context
+from log.error_log import setup_logging
+from events.EventView import embed_hash
 
 """
 Client instance loaded after barmaid.load_extensions() passes its instance into
@@ -24,6 +26,7 @@ Disclaimer: from barmaid import client, as it is module global variable doesn't
 work for example at events.usr_input(ctx, client).
 """
 CLIENT:commands.Bot = None
+log = setup_logging()
 
 # to be del
 async def ask_for(ctx:Context, requested_input:str)->str:
@@ -93,8 +96,10 @@ async def format_time(in_str:str) -> str:
     """
     FORMAT_FROM = "%Y-%m-%d %H:%M:%S"
     FORMAT_TO = "%Y-%m-%dT%H:%M:%S"
-    
-    return datetime.strptime(in_str, FORMAT_FROM).strftime(FORMAT_TO)
+    try:
+        return datetime.strptime(in_str, FORMAT_FROM).strftime(FORMAT_TO)
+    except Exception as e:
+        raise ValueError(f"Invalid string input: {in_str}")
 
 @commands.hybrid_group(with_app_command=True)
 @commands.guild_only()
@@ -120,8 +125,17 @@ async def ivoice(ctx:commands.Context, title:str, description:str, start_time:st
     start_time += ":00"
     if end_time:
         end_time = end_time + ":00"
-    start = await format_time(MILENIUM+start_time)
-    end = await format_time(MILENIUM+end_time) if end_time is not None else None
+    try:
+        start = await format_time(MILENIUM+start_time)
+        end = await format_time(MILENIUM+end_time) if end_time is not None else None
+    except:
+        if not end_time:
+            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}`", 
+                        delete_after=S.DELETE_COMMAND_ERROR)
+        else:
+            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}` \t end:`{end_time[:-3]}`", 
+                        delete_after=S.DELETE_COMMAND_ERROR)
+        return
 
     resp = await ScheduledEvents.create_guild_event(
         ctx.guild.id,
@@ -160,8 +174,17 @@ async def ilocation(ctx:commands.Context, title:str, description:str, start_time
     metadata = {"location": location}
     
     MILENIUM = "20"
-    start = await format_time(MILENIUM+start_time)
-    end = await format_time(MILENIUM+end_time)
+    try:
+        start = await format_time(MILENIUM+start_time)
+        end = await format_time(MILENIUM+end_time) if end_time is not None else None
+    except:
+        if not end_time:
+            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}`", 
+                        delete_after=S.DELETE_COMMAND_ERROR)
+        else:
+            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}` \t end:`{end_time[:-3]}`", 
+                        delete_after=S.DELETE_COMMAND_ERROR)
+        return
 
     
     resp = await ScheduledEvents.create_guild_event(
@@ -196,6 +219,11 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     """
     # Will be long interaction
     await ctx.defer()
+    if "cancelled" in title:
+        await ctx.send("Title cannot include word `cancelled` in it.",
+                       delete_after=S.DELETE_MINUTE, ephemeral=True)
+        return
+    orignal_time = start_time
     # Get rid of prefixed message in chat that invoked it
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
@@ -215,28 +243,29 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     emb = Embed()
     emb.set_author(name=f"by: {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
     emb.add_field(name="Name", value=title, inline=True)
-    emb.add_field(name="Date", value=start_time, inline=True)
+    emb.add_field(name="Date", value=orignal_time, inline=True)
     emb.add_field(name="Description", value=description, inline=True)
     emb.add_field(name="Voice", value=f"<#{voice.id}>", inline=False)
     emb.add_field(name=sign_up_string, value=default_unknown_value, inline=True)
     emb.add_field(name="Declined❌", value=default_unknown_value, inline=True)
     emb.add_field(name="Tentative❔", value=default_unknown_value, inline=True)
     emb.add_field(name="\x1D"*10, value="\x1D"*10, inline=True)
-    #emb.add_field(name="Calendar", value="N/A", inline=False)
     emb.set_footer(text=f"{hash}, {include_names}, {lim}")
     
     ok = await insert_db(DATABASE, ctx.guild.id, hash, {"author": ctx.author.id})
     if not ok:
         await ctx.send("Something has failed. Try again later.", 
-                       delete_after=S.DELETE_COMMAND_ERROR)
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
         return
     event_message = await ctx.send(embed=emb, view=v)
     try:
         await setup_notification(ctx, emb, event_message.id, start_time)
+        log.info(f"Notification set: {ctx.guild.name} at {start_time}")
     except ValueError:
-        await ctx.send("Event start time notification could not recognize date." / 
-                 "Notification for event won't be applied.",
-                 delete_after=S.DELETE_COMMAND_ERROR)
+        error_message = f"❗Date not recognized❗\n" \
+            f"Notifications not applied.\nstart_time:`{orignal_time}`"
+        await ctx.send(content=error_message,
+                 delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
       
 async def setup_notification(ctx:Context, emb:Embed, message_id:int, time:str):
     """Set's a timed notification for event start 15 minutes ahead.
@@ -281,10 +310,10 @@ async def setup_notification(ctx:Context, emb:Embed, message_id:int, time:str):
         await ctx.send(f"@here Event `{event_name.value}` starting soon!",
                     delete_after=S.DELETE_COMMAND_INVOKE)
         
-        # Notify the signed up members
         #new_updated_message = await ctx.fetch_message(message_id)
         #new_updated_embed = new_updated_message.embeds[0]
         
+        # Notify the signed up members
         name_field = new_updated_embed.fields[4]
         mentions = name_field.value
         trick_to_get_mentions_in_list = await ctx.send(content=mentions)
@@ -292,6 +321,7 @@ async def setup_notification(ctx:Context, emb:Embed, message_id:int, time:str):
         user_mentions = trick_to_get_mentions_in_list.mentions
         for u in user_mentions:
             await u.send(f"Event `{event_name.value}` on `{ctx.guild.name}` is starting soon!")
+        log.info(f"Notification runned: {ctx.guild.name} on embed {embed_hash(emb)}")
                   
 async def setup(target: commands.Bot):
     """Setup function which allows this module to be

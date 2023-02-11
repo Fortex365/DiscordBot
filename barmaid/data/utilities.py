@@ -4,6 +4,7 @@ import asyncio
 import sys
 from discord import Colour
 from discord.ext import commands
+from itertools import cycle
 
 CONFIG_LOADED = True
 HOURS_TO_DAY=24
@@ -53,13 +54,14 @@ EMBED_HELP_COMMAND_COLOR = Colour.blue()
 Filenames
 """
 DATABASE = settings["DATABASE_FILE_NAME"]
-NAUGHTY = settings["GLOBAL_NAUGHTY_LIST"]
+NAUGHTY_DB = settings["GLOBAL_NAUGHTY_LIST"]
 
 """
 Activity settings
 """
 act_stngs = settings['Activity']
-CLIENT_ACTIVITY = act_stngs['CLIENT_ACTIVITY']  
+CLIENT_ACTIVITY:list = act_stngs['CLIENT_ACTIVITY']
+CLIENT_ACTIVITY = cycle(CLIENT_ACTIVITY)
 
 """
 Security settings

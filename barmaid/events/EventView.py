@@ -1,9 +1,9 @@
 from typing import Union
 from functools import lru_cache
-from jsonified_database import insert_db, read_db, update_db
+from data.jsonified_database import insert_db, read_db, update_db
 
-import utilities as S
-from utilities import DATABASE
+import data.utilities as S
+from data.utilities import DATABASE
 
 from discord import Embed, Member
 from discord import User
@@ -118,6 +118,15 @@ class EventView(View):
         self.tentative.disabled = False
     
     @staticmethod
+    def is_cancelled(embed:Embed) -> bool:
+        embed_fields = embed.fields
+        name_field = embed_fields[0]
+        # was already cancelled before
+        if "Cancelled: " in name_field.value:
+            return True
+        return False
+        
+    @staticmethod
     async def do_action_no_names(type:str, origin_embed:Embed, interaction:Interaction, clicked_by:Union[User, Member]):
         # check iput
         accepted_input = ["sign", "tentative", "decline"]
@@ -190,6 +199,9 @@ class EventView(View):
         origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
         n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.SIGN_IN_FIELD_POSITION)
         
+        if EventView.is_cancelled(origin_embed):
+            return
+        
         v:str = v.removeprefix("N/A") if "N/A" in v else v
     
         
@@ -233,6 +245,9 @@ class EventView(View):
         origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
         n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.DECLINED_FIELD_POSITION)
         
+        if EventView.is_cancelled(origin_embed):
+            return
+        
         v:str = v.removeprefix("N/A") if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
@@ -262,6 +277,9 @@ class EventView(View):
         origin = await interaction.original_response()
         origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
         n, v, i = await EventView.get_embed_name_value_inline(origin_embed, EventView.TENTATIVE_FIELD_POSITION)
+        
+        if EventView.is_cancelled(origin_embed):
+            return
         
         v:str = v.removeprefix("N/A") if "N/A" in v else v
         
@@ -302,7 +320,8 @@ class EventView(View):
             origin_embed.set_field_at(1, name=time_field.name, value=cancelled_time,
                                       inline=time_field.inline)
             await interaction.edit_original_response(embed=origin_embed)
-            await interaction.channel.send(f"Event `{name_field.value}` at `{time_field.value}` was cancelled by author.")
+            await interaction.channel.send(f"Event `{name_field.value}` at" \
+                f"`{time_field.value}` was cancelled by author. Buttons disabled.")
             return
         await interaction.followup.send("Sorry, only author of the event can cancel it.", ephemeral=True)
           

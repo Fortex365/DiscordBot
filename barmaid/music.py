@@ -1,19 +1,29 @@
-import utilities as S
+import data.utilities as S
 import discord
 import asyncio
 import requests
 import random
 import youtube_dl
+from log.error_log import setup_logging
 from discord.ext import commands
 
 """
 Client instance loaded after barmaid.load_extensions() passes its instance into
 music.setup().
 """
+log = setup_logging()
 CLIENT:commands.Bot = None
 _voice_clients = {}
 _queues = {}
-_yt_dl_options = {'format': 'bestaudio/best'}
+_list_names = {}
+_yt_dl_options = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
 _ytdl = youtube_dl.YoutubeDL(_yt_dl_options)
 _ffmpeg_options = {"options": "-vn"}
 _JUKEBOX_ERROR = "Sorry, something unexpected sent wrong with jukebox." \
@@ -32,6 +42,7 @@ async def play(ctx:commands.Context, url:str):
     # connect to voice channel if not already connected
     voice_client = _voice_clients.get(ctx.guild.id)
     if not voice_client:
+        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
         voice_client = await ctx.author.voice.channel.connect()
         _voice_clients[ctx.guild.id] = voice_client
 
@@ -41,13 +52,31 @@ async def play(ctx:commands.Context, url:str):
         queue = asyncio.Queue()
         _queues[ctx.guild.id] = queue
     await queue.put(url)
+    
+    # add info
+    names = _list_names.get(ctx.guild.id)
+    loop = asyncio.get_event_loop()
+    try:
+        data = await loop.run_in_executor(None, lambda: _ytdl.extract_info(url, download=False))
+    except:
+        await ctx.send("Wrong URL.", S.DELETE_COMMAND_ERROR)
+        return
+    if not names:
+        name = list(data["title"])
+        name="".join([str(i) for i in name])
+        _list_names[ctx.guild.id] = [name]
+    else:
+        name = list(data["title"])
+        name="".join([str(i) for i in name])
+        _list_names[ctx.guild.id].append(name)
 
     # start playing the next song if not already playing
     if not voice_client.is_playing():
         await play_next(ctx)
         await ctx.send("Jukebox started!",
-                        ephemeral=True, delete_after=S.DELETE_EPHEMERAL)
-    await ctx.send("Added to queue!", ephemeral=True, 
+                    delete_after=S.DELETE_EPHEMERAL)
+        return
+    await ctx.send("Added to queue!", 
                    delete_after=S.DELETE_EPHEMERAL)
 
 async def play_next(ctx:commands.Context):
@@ -57,12 +86,19 @@ async def play_next(ctx:commands.Context):
     Args:
         ctx (commands.Context): _description_
     """
+    try:
+        _list_names[ctx.guild.id].pop()
+    except:
+        pass
     queue = _queues[ctx.guild.id]
     url = await queue.get()
 
     loop = asyncio.get_event_loop()
     data = await loop.run_in_executor(None, lambda: _ytdl.extract_info(url, download=False)) # meanwhile v loopu může běžet něco jiného než se extract dokončí
     music = data["url"]
+    _t = data["title"]
+
+    
     player = discord.FFmpegPCMAudio(music, **_ffmpeg_options)
     if not player.is_opus():
         player = discord.PCMVolumeTransformer(player, volume=1.0)
@@ -71,8 +107,9 @@ async def play_next(ctx:commands.Context):
     voice_client.play(player, after=lambda e:
         asyncio.run_coroutine_threadsafe(play_next(ctx), loop=loop))
     voice_client.player = player
+    log.info(f"Playing success: {_t}, at {ctx.guild.name}")
 
-@commands.hybrid_command(with_app_command=True)
+@commands.hybrid_command(with_app_command=True, name="play-playlist")
 @commands.guild_only()
 async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
     """Plays playlist.
@@ -84,13 +121,24 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
     """
     await ctx.defer(ephemeral=True)
     await ctx.send(f"May take some time if playlist is huge. " + 
-                   "Will start playing as soon as it's ready!")
+                   "Will start playing as soon as it's ready!", 
+                   delete_after=S.DELETE_MINUTE)
     # retrieve the list of URLs in the playlist
-
+    names = _list_names.get(ctx.guild.id)
     loop = asyncio.get_event_loop()
-    data = await loop.run_in_executor(None, lambda:
-        _ytdl.extract_info(playlist_url, download=False))
+    try:
+        data = await loop.run_in_executor(None, lambda:
+            _ytdl.extract_info(playlist_url, download=False))
+    except:
+        await ctx.send("Wrong URL.", S.DELETE_COMMAND_ERROR)
+        return
     urls = [entry["url"] for entry in data["entries"]]
+    data_names = [entry["title"] for entry in data["entries"]]
+    if not names:
+        _list_names[ctx.guild.id] = data_names
+    else:
+        for l in data_names:
+            _list_names[ctx.guild.id].append(l)
 
     # shuffle the list of URLs if shuffle is True
     if shuffle:
@@ -106,6 +154,7 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
 
     voice_client = _voice_clients.get(ctx.guild.id)
     if not voice_client:
+        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
         voice_client = await ctx.author.voice.channel.connect()
         _voice_clients[ctx.guild.id] = voice_client
     if not voice_client.is_playing():
@@ -126,6 +175,8 @@ async def stop(ctx:commands.Context):
     try:
         _voice_clients[ctx.guild.id].stop()
         await _voice_clients[ctx.guild.id].disconnect()
+        del _voice_clients[ctx.guild.id]
+        await ctx.send("Jukebox ended.", delete_after=S.DELETE_EPHEMERAL)
     except:
         await ctx.send(_JUKEBOX_ERROR,
                        ephemeral=True, delete_after=S.DELETE_EPHEMERAL)
@@ -141,6 +192,7 @@ async def pause(ctx:commands.Context):
     await ctx.defer(ephemeral=True)
     try:
         _voice_clients[ctx.guild.id].pause()
+        await ctx.send("Jukebox paused!", delete_after=S.DELETE_EPHEMERAL)
     except:
         await ctx.send(_JUKEBOX_ERROR,
                        ephemeral=True, delete_after=S.DELETE_EPHEMERAL)
@@ -156,6 +208,7 @@ async def resume(ctx:commands.Context):
     await ctx.defer(ephemeral=True)
     try:
         _voice_clients[ctx.guild.id].resume()
+        await ctx.send("Jukebox resumed!", delete_after=S.DELETE_EPHEMERAL)
     except:
         await ctx.send(_JUKEBOX_ERROR,
                        ephemeral=True, delete_after=S.DELETE_EPHEMERAL)  
@@ -203,6 +256,31 @@ async def volume(ctx:commands.Context, volume:int):
                 return
             await ctx.send("Success!", ephemeral=True,
                            delete_after=S.DELETE_EPHEMERAL)
+            
+@commands.hybrid_command(with_app_command=True)
+@commands.guild_only()
+async def queue(ctx: commands.Context):
+    """Lists all songs in the queue for the current guild.
+    
+    Args:
+    ctx (commands.Context): Invoke context
+    """
+    await ctx.defer(ephemeral=True)
+
+    names = _list_names.get(ctx.guild.id)
+    if not names:
+        await ctx.send("No songs waiting in the queue.", 
+                        delete_after=S.DELETE_EPHEMERAL)
+        return
+
+    # format the list of URLs into a message to send to the user
+    message = "Songs in the queue:\n"
+    for i, name in enumerate(names):
+        if i < 15:
+            message += f"{i + 1}. {name}\n"
+        else:
+            break
+    await ctx.send(message, delete_after=S.DELETE_MINUTE)            
                    
 async def setup(bot:commands.Bot):
     """Setup function which allows this module to be an extension
@@ -220,6 +298,7 @@ async def setup(bot:commands.Bot):
     bot.add_command(pause)
     bot.add_command(resume)
     bot.add_command(volume)
+    bot.add_command(queue)
 
     CLIENT = bot
 

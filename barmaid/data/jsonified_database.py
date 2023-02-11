@@ -1,9 +1,13 @@
 import asyncio
 import json
 import aiofiles
+from collections import OrderedDict
 from functools import wraps
+from log.error_log import setup_logging
 
-DATABASE = "data.json"
+log = setup_logging()
+
+# DATABASE = "data/data.json"
 
 READ_FLAG = "r"
 WRITE_FLAG = "w"
@@ -21,6 +25,26 @@ def async_cache(func):
         return cache[key]
     return wrapper
 
+def async_lru_cache(maxsize=8):
+    cache = OrderedDict()
+    
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            key = str(args) + str(kwargs)
+            
+            if key in cache:
+                value = cache.pop(key)
+                cache[key] = value
+            else:
+                if len(cache) >= maxsize:
+                    cache.popitem(last=False)
+                value = await func(*args, **kwargs)
+                cache[key] = value
+            return value
+        return wrapper
+    return decorator
+
 async def open_file(file_name:str) -> dict:
     """Opens json file and returns it as dict object.
 
@@ -35,7 +59,7 @@ async def open_file(file_name:str) -> dict:
             contents = await f.read()
             json_as_dict = json.loads(contents)
     except OSError as e:
-        # logging add(e)
+        log.critical(f"Opening file failed: {file_name} due {e}")
         raise OSError(e)
     return json_as_dict
 
@@ -56,7 +80,7 @@ async def flush_file(file_name:str, data:dict) -> str:
             await f.write(data)
             return data
     except OSError as e:
-        # logging add(e)
+        log.critical(f"Writing to file failed: {file_name} due {e}")
         raise OSError(e)
 
 async def read_db(file_name:str, id:int, key:str):
@@ -99,6 +123,7 @@ async def read_id(file_name:str, id:int):
     except KeyError as e:
         return None
 
+@async_lru_cache
 async def update_db(file_name:str, id:int, key:str, new_value):
     """Updates existing key-pair in the database stored by id (guild | member).
     If no such key exists, the key is added and asigned with new_value.
