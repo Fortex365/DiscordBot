@@ -29,15 +29,27 @@ Lastly, what bot could do is to stream music via Voice Channels on server passed
 
 # To host bot on your own
 Make sure your machine's running `Python 3.9+`, you can download it [here](https://www.python.org/).
+
+
+Installing Python for Linux:
+```
+sudo apt install python3-pip
+```
 To quickly check whether you've Python installed:
 ```
 python --version
 ```
 To install any requirements needed:
 ```
-python pip install requirements.txt
+ pip install -r requirements.txt
 ```
+
 Make sure you have `FFmpeg` installed and added to the PATH enviroment variables. You can download it [here](https://www.ffmpeg.org/).
+
+For Linux its:
+```
+sudo apt install ffmpeg
+```
 
 Visit [Discord Developer Portal](https://discord.com/developers/applications) and create new application there and save it's  `token`. KEEP IT SECRET!
 
@@ -78,9 +90,18 @@ After you're done editting, it's time to run it!
 ```
 python .\barmaid
 ```
-
+For running script on Linux server I suggest you to use `screen` first to make the script running even after your session from server is abandoned. Then you can `Ctrl + A + D` to detach from session before you close [PuTTY](https://www.putty.org/).
+```
+> screen
+> python barmaid.py
+```
+For next resuming the previous session after connecting again to server use:
+```
+screen -r
+```
 
 # The default prefix bot reacts on server is `..`
+:heavy_exclamation_mark::heavy_exclamation_mark::heavy_exclamation_mark:It's suggested to use in-app slash commands.:heavy_exclamation_mark::heavy_exclamation_mark::heavy_exclamation_mark:
 
 Example:
 ```

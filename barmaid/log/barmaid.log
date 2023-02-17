@@ -1,27 +1,12 @@
-2023-02-11 18:36:45,751:INFO:discord.client: logging in using static token
-2023-02-11 18:36:47,837:INFO:discord.gateway: Shard ID None has connected to Gateway (Session ID: 1a877606e1e6e683df7080cafa3d9561).
-2023-02-11 18:37:17,720:INFO:discord: Connecting success: to voice-room-2 in Barmaid Showcase
-2023-02-11 18:37:17,720:INFO:discord.voice_client: Connecting to voice...
-2023-02-11 18:37:17,720:INFO:discord.voice_client: Starting voice handshake... (connection attempt 1)
-2023-02-11 18:37:17,946:INFO:discord.voice_client: Voice handshake complete. Endpoint found frankfurt1591.discord.media
-2023-02-11 18:37:19,295:INFO:discord: Playing success: The Kid LAROI - Love Again (Lyrics) | 8D Audio 🎧, at Barmaid Showcase
-2023-02-11 18:37:23,671:INFO:discord.voice_client: The voice handshake is being terminated for Channel ID 907946880686751794 (Guild ID 907946271946440745)
-2023-02-11 18:37:23,673:INFO:discord.voice_client: Disconnecting from voice normally, close code 1000.
-2023-02-11 18:37:23,690:INFO:discord.player: ffmpeg process 28528 has not terminated. Waiting to terminate...
-2023-02-11 18:37:23,693:INFO:discord.player: ffmpeg process 28528 should have terminated with a return code of 1.
-2023-02-11 18:37:27,635:INFO:discord: Connecting success: to voice-room-2 in Barmaid Showcase
-2023-02-11 18:37:27,636:INFO:discord.voice_client: Connecting to voice...
-2023-02-11 18:37:27,636:INFO:discord.voice_client: Starting voice handshake... (connection attempt 1)
-2023-02-11 18:37:27,868:INFO:discord.voice_client: Voice handshake complete. Endpoint found frankfurt1591.discord.media
-2023-02-11 18:37:28,447:INFO:discord: Playing success: The Kid LAROI - Love Again (Lyrics) | 8D Audio 🎧, at Barmaid Showcase
-2023-02-11 18:37:39,507:INFO:discord: Playing success: The Kid LAROI - Love Again (Lyrics) | 8D Audio 🎧, at Barmaid Showcase
-2023-02-11 18:37:53,760:INFO:discord.voice_client: The voice handshake is being terminated for Channel ID 907946880686751794 (Guild ID 907946271946440745)
-2023-02-11 18:37:53,762:INFO:discord.voice_client: Disconnecting from voice normally, close code 1000.
-2023-02-11 18:37:53,774:INFO:discord.player: ffmpeg process 12752 has not terminated. Waiting to terminate...
-2023-02-11 18:37:53,777:INFO:discord.player: ffmpeg process 12752 should have terminated with a return code of 1.
-2023-02-11 18:37:56,391:INFO:discord: Connecting success: to voice-room-2 in Barmaid Showcase
-2023-02-11 18:37:56,391:INFO:discord.voice_client: Connecting to voice...
-2023-02-11 18:37:56,392:INFO:discord.voice_client: Starting voice handshake... (connection attempt 1)
-2023-02-11 18:37:56,633:INFO:discord.voice_client: Voice handshake complete. Endpoint found frankfurt1591.discord.media
-2023-02-11 18:37:57,313:INFO:discord: Playing success: The Kid LAROI - Love Again (Lyrics) | 8D Audio 🎧, at Barmaid Showcase
-2023-02-11 18:40:24,297:INFO:discord.player: ffmpeg process 27816 successfully terminated with return code of 0.
+2023-02-13 21:33:55,411:INFO:discord.client: logging in using static token
+2023-02-13 21:33:56,786:INFO:discord.gateway: Shard ID None has connected to Gateway (Session ID: 36dfbdd507986c32f2e2f97b57c4f02c).
+2023-02-13 21:34:28,512:INFO:discord: Connecting success: to voice-room-2 in Barmaid Showcase
+2023-02-13 21:34:28,513:INFO:discord.voice_client: Connecting to voice...
+2023-02-13 21:34:28,513:INFO:discord.voice_client: Starting voice handshake... (connection attempt 1)
+2023-02-13 21:34:28,760:INFO:discord.voice_client: Voice handshake complete. Endpoint found frankfurt5831.discord.media
+2023-02-13 21:34:32,107:INFO:discord: Playing success: Feint & Josh Rubin - Let Me Go [Monstercat Release], at Barmaid Showcase
+2023-02-13 21:34:46,229:INFO:discord.voice_client: The voice handshake is being terminated for Channel ID 907946880686751794 (Guild ID 907946271946440745)
+2023-02-13 21:34:46,230:INFO:discord.player: ffmpeg process 17372 has not terminated. Waiting to terminate...
+2023-02-13 21:34:46,231:INFO:discord.voice_client: Disconnecting from voice normally, close code 1000.
+2023-02-13 21:34:46,233:INFO:discord.player: ffmpeg process 17372 should have terminated with a return code of 1.
+2023-02-13 21:35:14,468:INFO:discord: Post success: to https://discord.com/api/v8/guilds/907946271946440745/scheduled-events

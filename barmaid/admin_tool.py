@@ -24,10 +24,10 @@ async def helpme(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of invoke
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.invoked_subcommand:
         if not ctx.interaction:
             await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-        await ctx.defer(ephemeral=True)
         await ctx.send("Please specify command you want help for.", 
                        delete_after=S.DELETE_COMMAND_INVOKE)
 
@@ -67,10 +67,10 @@ async def clear(ctx:commands.Context, amount:int=1):
         amount (optional): Number of messages to delete.
     """
     # If invoked via slash commands, no need to purge invoke itself.
+    await ctx.defer(ephemeral=True)    
     if not ctx.interaction:
         amount += 1
     
-    await ctx.defer(ephemeral=True)    
     if amount > 0:
         await ctx.channel.purge(limit=amount)
         amount = amount - 1 if not ctx.interaction else amount
@@ -83,8 +83,7 @@ async def clear(ctx:commands.Context, amount:int=1):
         
 @clear.error
 async def clear_error(ctx:commands.Context, error:errors):
-    await ctx.defer(ephemeral=True)    
-
+    await ctx.defer(ephemeral=True)
     # Bot missing permissions
     if isinstance(error, discord.Forbidden):
         await ctx.send(f"{CLIENT} missing permissions `Manage Messages`",
@@ -104,8 +103,8 @@ async def id(ctx:commands.Context):
     Args:
     ctx: Current context of the message that invoked the command.
     """
-    id = ctx.message.author.id
     await ctx.defer(ephemeral=True)
+    id = ctx.message.author.id
     
     if not ctx.interaction:
         if ctx.message.guild:
@@ -117,7 +116,6 @@ async def id(ctx:commands.Context):
 @id.error
 async def invoker_id_error(ctx:commands.Context, error:errors,):
     await ctx.defer(ephemeral=True)
-    
     await ctx.send(error,
                    delete_after=S.DELETE_COMMAND_ERROR)
         
@@ -135,10 +133,10 @@ async def echo(ctx:commands.Context, *, message:str=None):
         message: Message to be repeated.
     """
     
+    await ctx.defer(ephemeral=True)
     if not message:
         raise commands.CommandError(f"Argument message cannot be empty. Was `{message}`")
     
-    await ctx.defer(ephemeral=True)
     if ctx.guild and not ctx.interaction:
         await ctx.message.delete()
     await ctx.send(message,
@@ -166,8 +164,8 @@ async def guid(ctx:commands.Context):
     Args:
         ctx: Context deducted from invocation.
     """
-    server_id = ctx.guild.id
     await ctx.defer(ephemeral=True)
+    server_id = ctx.guild.id
     if not ctx.interaction:
         await ctx.message.author.send(f"{server_id = }")
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
@@ -248,6 +246,7 @@ async def setprefix(ctx:commands.Context, new_prefix:str=None):
         ctx (commands.Context): Context of command invocation
         new_prefix (str, optional): Symbol to be the new prefix.
     """
+    await ctx.defer(ephemeral=True)
     SYMBOLS = string.punctuation
     
     if not new_prefix:
@@ -257,7 +256,6 @@ async def setprefix(ctx:commands.Context, new_prefix:str=None):
         raise commands.CommandError("Prefix cannot have more than one special symbol. " \
             f"Allowed symbols are:\n > {SYMBOLS}")
 
-    await ctx.defer(ephemeral=True)
     if not await update_db(DATABASE, ctx.guild.id, 'prefix', new_prefix):
         await database_fail(ctx)
     else:
@@ -296,6 +294,7 @@ async def kick(ctx:commands.Context,
         Defaults to None.
         reason (str, optional): Anything they did wrong
     """
+    await ctx.defer(ephemeral=True)
     if not members:
         raise commands.CommandError("No people to perform kick operation.")
 
@@ -325,7 +324,6 @@ async def kick(ctx:commands.Context,
             continue
         await member.kick(reason=reason)
     # App response
-    await ctx.defer(ephemeral=True)
     await ctx.send("Success!", 
                    delete_after=S.DELETE_COMMAND_INVOKE)
 
@@ -338,18 +336,17 @@ async def kick_error(ctx:commands.Context, error:errors):
         error (discord.errors): Error raised.
         ctx (commands.Context): Context of the invoked command.
     """
+    await ctx.defer(ephemeral=True)
     if isinstance(error, commands.MissingPermissions):
         owner = ctx.guild.owner
         direct_message = await owner.create_dm()
         await direct_message.send(f"{ctx.message.author} performed " \
             "kick operation, but misses permission Kick Members.")
-        await ctx.defer(ephemeral=True)
         await ctx.send(error)
         if not ctx.interaction:
             await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
         return
 
-    await ctx.defer(ephemeral=True)
     await ctx.send(error,
                 delete_after=S.DELETE_COMMAND_ERROR)
     if not ctx.interaction:
@@ -391,6 +388,7 @@ async def ban(ctx:commands.Context, members:commands.Greedy[Member]=None, *,
         del_msg_in_days (int): Deletes msgs banned user wrote in past days
         Defaults to "No reason provided".
     """
+    await ctx.defer(ephemeral=True)
     if not members:
         raise commands.CommandError("No people to perform kick operation.")
 
@@ -421,7 +419,7 @@ async def ban(ctx:commands.Context, members:commands.Greedy[Member]=None, *,
         await member.ban(reason=reason, delete_message_days=del_msg_in_days)
         await add_to_naughty_list(member.id, ctx.guild, reason)
     # App response
-    await ctx.defer(ephemeral=True)
+
     await ctx.send("Success!", 
                    delete_after=S.DELETE_COMMAND_INVOKE)
 
@@ -434,18 +432,17 @@ async def ban_error(ctx:commands.Context, error:errors):
         error (discord.errors): Error raised.
         ctx (commands.Context): Context of the invoked command.
     """
+    await ctx.defer(ephemeral=True)
     if isinstance(error, commands.MissingPermissions):
         owner = ctx.guild.owner
         direct_message = await owner.create_dm()
         await direct_message.send(f"{ctx.message.author} performed " \
             "ban operation, but misses permission Ban Members.")
-        await ctx.defer(ephemeral=True)
         await ctx.send(error)
         if not ctx.interaction:
             await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
         return
 
-    await ctx.defer(ephemeral=True)
     await ctx.send(error,
                 delete_after=S.DELETE_COMMAND_ERROR)
     if not ctx.interaction:
@@ -462,6 +459,7 @@ async def naugty(ctx:commands.Context, member:Member):
         ctx (commands.Context): Context of invoke
         member (Member): Member to determine if its naughty
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
@@ -479,7 +477,6 @@ async def naugty(ctx:commands.Context, member:Member):
         r = server_info["reason"]
         message += f"{gn} — {r}"
         
-    await ctx.defer(ephemeral=True)
     await ctx.send(message, delete_after=S.DELETE_COMMAND_INVOKE)
         
 @commands.hybrid_command(with_app_command=True)
@@ -495,6 +492,7 @@ async def move(ctx:commands.Context, destination:VoiceChannel=None,
         source (VoiceChannel, optional): From where. Defaults to None.
         reason (str, optional): Why to move them. Defaults to None.
     """
+    await ctx.defer(ephemeral=True)
     if not members:
         raise commands.CommandError("No people to perform move operation on.")
     if not ctx.interaction:
@@ -505,7 +503,6 @@ async def move(ctx:commands.Context, destination:VoiceChannel=None,
         await member.move_to(channel=destination,
                                 reason=reason+f", by {ctx.author}")
         
-    await ctx.defer(ephemeral=True)
     await ctx.send("Success!", delete_after=S.DELETE_COMMAND_INVOKE)
         
 @move.error
@@ -530,6 +527,7 @@ async def move_help(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of invoke
     """
+    await ctx.defer(ephemeral=True)
     emb = Embed(title="Help: move",
                 description="<prefix>move @mention1 .. @mentionN destination reason",
                 color=S.EMBED_HELP_COMMAND_COLOR)
@@ -540,7 +538,6 @@ async def move_help(ctx:commands.Context):
         " Copy ID, then write <#> for each destination or source argument to the command." \
         " Paste what you've copied after # symbol.")
     
-    await ctx.defer(ephemeral=True)
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
@@ -564,6 +561,7 @@ async def message(ctx:commands.Context, *, message:str):
         ctx (commands.Context): Context of command invoke
         msg (str, optional): Message to send.
     """
+    await ctx.defer(ephemeral=True)
     if not message:
         raise commands.CommandError("Argument message cannot be empty")
     owner:Member = ctx.guild.owner
@@ -582,20 +580,18 @@ async def message(ctx:commands.Context, *, message:str):
                 if mem.bot == True:
                     continue
                 await mem.send(f"**{ctx.guild.name}** server sents a message:\n" + message)
-            await ctx.defer(ephemeral=True)
             await ctx.send("Success!", delete_after=S.DELETE_COMMAND_INVOKE)
             return
         
-        await ctx.defer(ephemeral=True)
         await ctx.send(f"**{ctx.guild.name}** Cannot sent because server member count" +
             f" exceeded limit of {S.MASSDM_EXPLOIT_LIMIT}",
             delete_after=S.DELETE_COMMAND_INVOKE)
 
 @massdm.error
 async def massdm_error(error:errors, ctx:commands.Context):
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
-    await ctx.defer(ephemeral=True)
     
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(error, delete_after=S.DELETE_COMMAND_ERROR)
@@ -616,6 +612,7 @@ async def embedded(ctx:commands.Context, message:str, footer:str,
         color (str, optional): Color of embed. Defaults to "0x00fefe".
         footer (str, optional): Bottom information of embed.
     """
+    await ctx.defer(ephemeral=True)
     if not message:
         raise commands.CommandError("Argument message cannot be empty")
 
@@ -639,11 +636,10 @@ async def embedded(ctx:commands.Context, message:str, footer:str,
                 if mem.bot == True:
                     continue
                 await mem.send(embed=emb)
-            await ctx.defer(ephemeral=True)
+
             await ctx.send("Success!", delete_after=S.DELETE_COMMAND_INVOKE)
             return
 
-        await ctx.defer(ephemeral=True)
         await ctx.send(f"**{ctx.guild.name}** Cannot sent because server member count" +
             f" exceeded limit of {S.MASSDM_EXPLOIT_LIMIT}",
             delete_after=S.DELETE_COMMAND_INVOKE)
@@ -656,6 +652,7 @@ async def rules(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invocation
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
@@ -665,10 +662,8 @@ async def rules(ctx:commands.Context):
         for idx, rule in guild_rules.items():
             result.append(f"{int(idx)+1}) " + rule)
         formated_output = "\n".join(result)
-        await ctx.defer(ephemeral=True)
         await ctx.send(formated_output, delete_after=S.DELETE_MINUTE)
         return
-    await ctx.defer(ephemeral=True)
     await ctx.send("No rules have been set yet.", delete_after=S.DELETE_COMMAND_INVOKE)
         
 @commands.hybrid_command(with_app_command=True)
@@ -681,9 +676,9 @@ async def addrule(ctx:commands.Context, *, new_rule:str):
         ctx (commands.Context): Context of command invoke
         rules (str, optional): Guild rules.
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     
     exists = await read_db(DATABASE, ctx.guild.id, "guild-rules")
     if not exists:
@@ -708,9 +703,9 @@ async def rules_reset(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of invoke
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     
     successfull_remove = await delete_from_db(DATABASE, ctx.guild.id, "guild-rules")
     if successfull_remove:
@@ -721,9 +716,9 @@ async def rules_reset(ctx:commands.Context):
 
 @addrule.error
 async def setrules_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(error,
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -732,9 +727,9 @@ async def setrules_error(ctx:commands.Context, error:errors):
 
 @rules_reset.error
 async def rules_reset_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(error,
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -751,9 +746,9 @@ async def delrule(ctx:commands.Context, index:int):
         ctx (commands.Context): Context of invoke
         index (int): Index number
     """ 
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
        
     guild_rules:dict = await read_db(DATABASE, ctx.guild.id, "guild-rules")
     if not guild_rules:
@@ -774,9 +769,9 @@ async def delrule(ctx:commands.Context, index:int):
 
 @delrule.error
 async def delrule_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(error,
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -791,8 +786,8 @@ async def binvite(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
-    msg = Embed(title="Invitation link [Bot]", description=S.BOT_INVITE_URL)
     await ctx.defer(ephemeral=True)
+    msg = Embed(title="Invitation link [Bot]", description=S.BOT_INVITE_URL)
     await ctx.send(embed=msg,
                    delete_after=S.DELETE_MINUTE)
     if not ctx.interaction:
@@ -812,11 +807,11 @@ async def finvite(ctx:commands.Context, kick_after_dc:bool=False,
         age (int, optional): Time before invitation expires. Default infinite.
         use (int, optional): Uses before invitation expires. Default infinite.
     """
+    await ctx.defer(ephemeral=True)
     ch:channel.TextChannel = ctx.channel
     invite:Invite = await ch.create_invite(temporary=kick_after_dc, max_uses=use,
                                 max_age=age)
     embd = Embed(title="Invitation link [Server]", description=invite.url)
-    await ctx.defer(ephemeral=True)
     await ctx.send(embed=embd, delete_after=S.DELETE_MINUTE)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
@@ -828,11 +823,11 @@ async def finvite_help(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
+    await ctx.defer(ephemeral=True)
     embd = Embed(title="Help: finvite", 
                  description="Args: kick_after_dc[True/False] max_age[seconds]"\
                      " max_uses[number]",
                  color=S.EMBED_HELP_COMMAND_COLOR)
-    await ctx.defer(ephemeral=True)
     await ctx.send(embed=embd,
                    delete_after=S.DELETE_HOUR)
 
@@ -855,9 +850,9 @@ async def show(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
+    await ctx.defer(ephemeral=True)    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE) 
-    await ctx.defer(ephemeral=True)    
     response = await read_db(DATABASE,ctx.guild.id, "auto-role")
     if response:
         await ctx.send(f"Role to give when someone joins this server is: " \
@@ -890,8 +885,9 @@ async def set(ctx:commands.Context, role:Role):
 
     Args:
         ctx (commands.Context): Context of command invoke
-        role (Role, optional): Role to give.
+        role (Role, optional): Role to give. MAKE SURE THE ROLE IS BELOW BOTS ROLE IN HIERARCHY!
     """
+    await ctx.defer(ephemeral=True)
     if not role:
         raise commands.CommandError("No role has been specified.")
     guid = ctx.guild.id
@@ -901,7 +897,6 @@ async def set(ctx:commands.Context, role:Role):
         raise commands.BadArgument("Role does not exist")
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
      
     response = await insert_db(DATABASE, guid, "auto-role", role.id)
     if response:
@@ -920,9 +915,9 @@ async def remove(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     guid = ctx.guild.id
     
     success = await delete_from_db(DATABASE, guid, "auto-role")
@@ -938,13 +933,14 @@ async def autorole_help(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     emb = Embed(title="Help: autorole",
                 description="<prefix>autorole set @role_mention\n" \
                     "<prefix>autorole show\n" \
-                    "<prefix>autorole remove",
+                    "<prefix>autorole remove\n" \
+                    "MAKE SURE THE ROLE BOT WILL GIVE IS UNDER BOTS ROLE IN HIERARCHY!",
                     color=S.EMBED_HELP_COMMAND_COLOR)    
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
  
@@ -966,9 +962,9 @@ async def show(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of invoke
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     blacklist:list = await read_db(DATABASE, ctx.guild.id, "blacklist")
 
     if not blacklist:
@@ -987,9 +983,9 @@ async def add(ctx:commands.Context, *, words:str):
         ctx (commands.Context): Context of invoke
         words (str): Banned word
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     words_each:list = words.split()
 
     is_ok = await insert_db(DATABASE, ctx.guild.id, "blacklist", words_each)
@@ -1009,9 +1005,9 @@ async def remove(ctx:commands.Context, *, words_to_del:str):
         ctx (commands.Context): Context of invoke
         words_to_del (str): Word to be revoked from blacklist.
     """ 
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     words:list = words_to_del.split()
 
     current_bl:list = await read_db(DATABASE,ctx.guild.id, "blacklist")
@@ -1042,9 +1038,9 @@ async def filter_help(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    await ctx.defer(ephemeral=True)
     emb = Embed(title="Help: filter",
                 description="<prefix>filter add word1 word2 ... wordn\n" \
                     "<prefix>filter remove word1",
@@ -1064,18 +1060,17 @@ async def show(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of invoke
     """ 
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     mods_id:list = await read_db(DATABASE, ctx.guild.id, "mods_to_notify")
     if not mods_id:
-        await ctx.defer(ephemeral=True)
         await ctx.send("None set yet!")
         return
     mods:Member = [ctx.guild.get_member(int(m)) for m in mods_id]
     msg = "Guild mods:\n>>> "
     for m in mods:
         msg+= f"{m.mention}\n"
-    await ctx.defer(ephemeral=True)
     await ctx.send(msg)
     
 @mods_to_notify.command()
@@ -1086,6 +1081,7 @@ async def add(ctx:commands.Context, member:Member):
         ctx (commands.Context): Context of invoke
         member (Member): User to treat as guild mod
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
@@ -1096,7 +1092,6 @@ async def add(ctx:commands.Context, member:Member):
         # remove dups
         mods_now = remove_dups(mods_now)
         await update_db(DATABASE, ctx.guild.id, "mods_to_notify", mods_now)
-    await ctx.defer(ephemeral=True)
     await ctx.send(f"{member} added!", delete_after=S.DELETE_COMMAND_INVOKE)
 
 @mods_to_notify.command()
@@ -1106,12 +1101,12 @@ async def reset(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of invoke
     """
+    await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
     await delete_from_db(DATABASE, ctx.guild.id, "mods_to_notify")
     
-    await ctx.defer(ephemeral=True)
     await ctx.send("Reset successful.", delete_after=S.DELETE_COMMAND_INVOKE)
 
 def remove_dups(l:list):

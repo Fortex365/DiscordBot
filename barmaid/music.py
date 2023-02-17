@@ -107,6 +107,7 @@ async def play_next(ctx:commands.Context):
     voice_client.play(player, after=lambda e:
         asyncio.run_coroutine_threadsafe(play_next(ctx), loop=loop))
     voice_client.player = player
+    voice_client.now_playing = data
     log.info(f"Playing success: {_t}, at {ctx.guild.name}")
 
 @commands.hybrid_command(with_app_command=True, name="play-playlist")
@@ -280,7 +281,26 @@ async def queue(ctx: commands.Context):
             message += f"{i + 1}. {name}\n"
         else:
             break
-    await ctx.send(message, delete_after=S.DELETE_MINUTE)            
+    await ctx.send(message, delete_after=S.DELETE_MINUTE)
+    
+    
+@commands.hybrid_command(with_app_command=True)
+@commands.guild_only()
+async def shazam(ctx: commands.Context):
+    """Tells you what song is currently playing.
+    
+    Args:
+    ctx (commands.Context): Invoke context
+    """
+    await ctx.defer(ephemeral=True)
+
+    vc = _voice_clients.get(ctx.guild.id)
+    song = vc.now_playing
+    
+    title = song["title"]
+    message = title + "\n" + song["url"]
+    await ctx.send(message, delete_after=S.DELETE_MINUTE)
+           
                    
 async def setup(bot:commands.Bot):
     """Setup function which allows this module to be an extension
@@ -299,6 +319,7 @@ async def setup(bot:commands.Bot):
     bot.add_command(resume)
     bot.add_command(volume)
     bot.add_command(queue)
+    bot.add_command(skip)
 
     CLIENT = bot
 
