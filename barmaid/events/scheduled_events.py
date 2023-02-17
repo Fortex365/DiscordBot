@@ -148,7 +148,7 @@ class ScheduledEvents:
         if channel_id and event_metadata:
             raise ValueError(f"If event_metadata is set, channel_id must be set to None. And vice versa.")
         
-        ENDPOINT_URL = f"{ScheduledEvents.API_URL}/guilds/{guild_id}/scheduled-events\{event}"
+        ENDPOINT_URL = f"{ScheduledEvents.API_URL}/guilds/{guild_id}/scheduled-events/{event}"
         entity_type = ScheduledEvents.EXTERNAL if channel_id is None else ScheduledEvents.VOICE
         
         event_data = json.dumps({
