@@ -53,11 +53,7 @@ sudo apt install ffmpeg
 
 Visit [Discord Developer Portal](https://discord.com/developers/applications) and create new application there and save it's  `token`. KEEP IT SECRET!
 
-For Mac:
-```
-export DISCORD_BOT_TOKEN=your_token_here
-```
-For Linux:
+For Mac/Linux:
 ```
 export DISCORD_BOT_TOKEN=your_token_here
 ```
