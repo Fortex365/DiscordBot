@@ -108,37 +108,38 @@ async def events(ctx:commands.Context):
     pass
 
 @events.command()
-async def edit_voice(ctx:commands.Context, search_by_name:str, title:str, description:str, start_time:str, voice_ch:VoiceChannel, end_time:str=None):
+async def edit_voice(ctx:commands.Context, search_by_name:str, new_title:str, new_description:str, new_start_time:str, new_voice:VoiceChannel, new_end_time:str=None):
     """Edits internal discord event.
 
     Args:
         ctx (commands.Context): Context of invoke
-        title (str): Title of event
-        description (str): Description of event
-        start_time (str): Use "yy-mm-dd hh:mm" format
-        voice_ch (VoiceChannel): Voice channel id
-        end_time (str, optional): Use "yy-mm-dd hh:mm" format. Optional.
+        search_by_name (str): Old title
+        new_title (str): Title of event
+        new_description (str): Description of event
+        new_start_time (str): Use "yy-mm-dd hh:mm" format
+        new_voice (VoiceChannel): Voice channel id
+        new_end_time (str, optional): Use "yy-mm-dd hh:mm" format. Optional.
     """
     await ctx.defer(ephemeral=True)
     
     MILENIUM = "20"
-    start_time += ":00"
-    if end_time:
-        end_time = end_time + ":00"
+    new_start_time += ":00"
+    if new_end_time:
+        new_end_time = new_end_time + ":00"
     try:
-        start = await format_time(MILENIUM+start_time)
-        end = await format_time(MILENIUM+end_time) if end_time is not None else None
+        start = await format_time(MILENIUM+new_start_time)
+        end = await format_time(MILENIUM+new_end_time) if new_end_time is not None else None
     except:
-        if not end_time:
-            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}`", 
+        if not new_end_time:
+            await ctx.send(f"Invalid time format. start:`{new_start_time[:-3]}`", 
                         delete_after=S.DELETE_COMMAND_ERROR)
         else:
-            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}` \t end:`{end_time[:-3]}`", 
+            await ctx.send(f"Invalid time format. start:`{new_start_time[:-3]}` \t end:`{new_end_time[:-3]}`", 
                         delete_after=S.DELETE_COMMAND_ERROR)
         return
 
     try:
-        event_id = ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
+        event_id = await ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
     except:
         await ctx.send(f"Existing event with name `{search_by_name}` not found.",
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -148,56 +149,57 @@ async def edit_voice(ctx:commands.Context, search_by_name:str, title:str, descri
     resp = await ScheduledEvents.modify_guild_event(
         event_id,
         ctx.guild.id,
-        title,
-        description,
+        new_title,
+        new_description,
         start,
         end,
         None,
-        voice_ch.id
+        new_voice.id
     )
     
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
     if resp.status == 200:
-        await ctx.send(f"Editted event `{title}` on `{start_time}`", delete_after=S.DELETE_COMMAND_INVOKE)
+        await ctx.send(f"Old event `{search_by_name}` has new title `{new_title}` with date `{new_start_time}`", delete_after=S.DELETE_COMMAND_INVOKE)
         return
     await ctx.send(f"Event edit has failed. Try again later.", 
                    delete_after=S.DELETE_COMMAND_ERROR)
     
 @events.command()
-async def edit_location(ctx:commands.Context, search_by_name:str, title:str, description:str, start_time:str, end_time:str, location:str):
+async def edit_location(ctx:commands.Context, search_by_name:str, new_title:str, new_description:str, new_start_time:str, new_end_time:str, new_location:str):
     """Edits internal discord event.
 
     Args:
         ctx (commands.Context): Context of invoke
-        title (str): Title of event
-        description (str): Description of event
-        start_time (str): Use "yy-mm-dd hh:mm" format
-        voice_ch (VoiceChannel): Voice channel id
-        end_time (str, optional): Use "yy-mm-dd hh:mm" format. Optional.
+        search_by_name (str): Old event name
+        new_title (str): Title of event
+        new_description (str): Description of event
+        new_start_time (str): Use "yy-mm-dd hh:mm" format. REQUIRED.
+        new_end_time (str): Use "yy-mm-dd hh:mm" format. REQUIRED.
+        new_location (str): Your location name
     """
     await ctx.defer(ephemeral=True)
     
     MILENIUM = "20"
-    start_time += ":00"
-    metadata = {"location": location}
-    if end_time:
-        end_time = end_time + ":00"
+    new_start_time += ":00"
+    metadata = {"location": new_location}
+    if new_end_time:
+        new_end_time = new_end_time + ":00"
     try:
-        start = await format_time(MILENIUM+start_time)
-        end = await format_time(MILENIUM+end_time) if end_time is not None else None
+        start = await format_time(MILENIUM+new_start_time)
+        end = await format_time(MILENIUM+new_end_time) if new_end_time is not None else None
     except:
-        if not end_time:
-            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}`", 
+        if not new_end_time:
+            await ctx.send(f"Invalid time format. start:`{new_start_time[:-3]}`", 
                         delete_after=S.DELETE_COMMAND_ERROR)
         else:
-            await ctx.send(f"Invalid time format. start:`{start_time[:-3]}` \t end:`{end_time[:-3]}`", 
+            await ctx.send(f"Invalid time format. start:`{new_start_time[:-3]}` \t end:`{new_end_time[:-3]}`", 
                         delete_after=S.DELETE_COMMAND_ERROR)
         return
 
     try:
-        event_id = ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
+        event_id = await ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
     except:
         await ctx.send(f"Existing event with name `{search_by_name}` not found.",
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -206,8 +208,8 @@ async def edit_location(ctx:commands.Context, search_by_name:str, title:str, des
     resp = await ScheduledEvents.modify_guild_event(
         event_id,
         ctx.guild.id,
-        title,
-        description,
+        new_title,
+        new_description,
         start,
         end,
         metadata,
@@ -217,7 +219,7 @@ async def edit_location(ctx:commands.Context, search_by_name:str, title:str, des
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
     if resp.status == 200:
-        await ctx.send(f"Editted event `{title}` on `{start_time}`", delete_after=S.DELETE_COMMAND_INVOKE)
+        await ctx.send(f"Old event `{search_by_name}` has new title `{new_title}` with date `{new_start_time}`", delete_after=S.DELETE_COMMAND_INVOKE)
         return
     await ctx.send(f"Event edit has failed. Try again later.", 
                    delete_after=S.DELETE_COMMAND_ERROR)
@@ -280,8 +282,8 @@ async def ilocation(ctx:commands.Context, title:str, description:str, start_time
         title (str): Title of event
         description (str): Description of event
         start_time (str): Use "yy-mm-dd hh:mm" format. REQUIRED.
-        voice_ch (VoiceChannel): Voice channel id
         end_time (str): Use "yy-mm-dd hh:mm" format. REQUIRED.
+        location (str): Your location name
     """
     await ctx.defer(ephemeral=True)
     start_time += ":00"

@@ -54,7 +54,7 @@ class ScheduledEvents:
         return response_list
     
     @staticmethod
-    async def find_guild_event(target_name:str, guild_id:int)->int:
+    async def find_guild_event(target_name:str, guild_id:int)->str:
         """Returns id of guild event by given event namme.
 
         Args:
@@ -65,7 +65,7 @@ class ScheduledEvents:
             ValueError: When not found withing guild
 
         Returns:
-            int: id of the found event
+            str: id of the found event
         """
         all = await ScheduledEvents.list_guild_events(guild_id)
         for event in all:

@@ -1,12 +1,223 @@
-2023-02-13 21:33:55,411:INFO:discord.client: logging in using static token
-2023-02-13 21:33:56,786:INFO:discord.gateway: Shard ID None has connected to Gateway (Session ID: 36dfbdd507986c32f2e2f97b57c4f02c).
-2023-02-13 21:34:28,512:INFO:discord: Connecting success: to voice-room-2 in Barmaid Showcase
-2023-02-13 21:34:28,513:INFO:discord.voice_client: Connecting to voice...
-2023-02-13 21:34:28,513:INFO:discord.voice_client: Starting voice handshake... (connection attempt 1)
-2023-02-13 21:34:28,760:INFO:discord.voice_client: Voice handshake complete. Endpoint found frankfurt5831.discord.media
-2023-02-13 21:34:32,107:INFO:discord: Playing success: Feint & Josh Rubin - Let Me Go [Monstercat Release], at Barmaid Showcase
-2023-02-13 21:34:46,229:INFO:discord.voice_client: The voice handshake is being terminated for Channel ID 907946880686751794 (Guild ID 907946271946440745)
-2023-02-13 21:34:46,230:INFO:discord.player: ffmpeg process 17372 has not terminated. Waiting to terminate...
-2023-02-13 21:34:46,231:INFO:discord.voice_client: Disconnecting from voice normally, close code 1000.
-2023-02-13 21:34:46,233:INFO:discord.player: ffmpeg process 17372 should have terminated with a return code of 1.
-2023-02-13 21:35:14,468:INFO:discord: Post success: to https://discord.com/api/v8/guilds/907946271946440745/scheduled-events
+2023-02-18 16:23:05,222:INFO:discord.client: logging in using static token
+2023-02-18 16:23:06,298:INFO:discord.gateway: Shard ID None has connected to Gateway (Session ID: 3050cdcb0c2c0158bc0df1c661e19380).
+2023-02-18 16:23:19,028:INFO:discord: Get success: to https://discord.com/api/v8/guilds/907946271946440745/scheduled-events
+2023-02-18 16:23:57,341:WARNING:discord.gateway: Shard ID None heartbeat blocked for more than 10 seconds.
+Loop thread traceback (most recent call last):
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\__main__.py", line 39, in <module>
+    cli.main()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 430, in main
+    run()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\barmaid.py", line 247, in <module>
+    CLIENT.run(CONNECTION_TOKEN)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\client.py", line 828, in run
+    asyncio.run(runner())
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1089, in wrapper
+    await self._call(interaction)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\ext\commands\hybrid.py", line 438, in _invoke_with_namespace
+    value = await self._do_call(ctx, ctx.kwargs)  # type: ignore
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\commands.py", line 851, in _do_call
+    return await self._callback(interaction, **params)  # type: ignore
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\events\event.py", line 142, in edit_voice
+    event_id = await ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\events\scheduled_events.py", line 72, in find_guild_event
+    if event["name"] == target_name:
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 1197, in trace_dispatch
+    self.do_wait_suspend(thread, frame, event, arg)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 165, in do_wait_suspend
+    self._args[0].do_wait_suspend(*args, **kwargs)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2070, in do_wait_suspend
+    keep_suspended = self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread, frames_tracker)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2106, in _do_wait_suspend
+    time.sleep(0.01)
+
+2023-02-18 16:24:07,356:WARNING:discord.gateway: Shard ID None heartbeat blocked for more than 20 seconds.
+Loop thread traceback (most recent call last):
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\__main__.py", line 39, in <module>
+    cli.main()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 430, in main
+    run()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\barmaid.py", line 247, in <module>
+    CLIENT.run(CONNECTION_TOKEN)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\client.py", line 828, in run
+    asyncio.run(runner())
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1089, in wrapper
+    await self._call(interaction)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\ext\commands\hybrid.py", line 438, in _invoke_with_namespace
+    value = await self._do_call(ctx, ctx.kwargs)  # type: ignore
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\commands.py", line 851, in _do_call
+    return await self._callback(interaction, **params)  # type: ignore
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\events\event.py", line 142, in edit_voice
+    event_id = await ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\events\scheduled_events.py", line 72, in find_guild_event
+    if event["name"] == target_name:
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 1197, in trace_dispatch
+    self.do_wait_suspend(thread, frame, event, arg)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 165, in do_wait_suspend
+    self._args[0].do_wait_suspend(*args, **kwargs)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2070, in do_wait_suspend
+    keep_suspended = self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread, frames_tracker)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2106, in _do_wait_suspend
+    time.sleep(0.01)
+
+2023-02-18 16:24:17,369:WARNING:discord.gateway: Shard ID None heartbeat blocked for more than 30 seconds.
+Loop thread traceback (most recent call last):
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\__main__.py", line 39, in <module>
+    cli.main()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 430, in main
+    run()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\barmaid.py", line 247, in <module>
+    CLIENT.run(CONNECTION_TOKEN)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\client.py", line 828, in run
+    asyncio.run(runner())
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1089, in wrapper
+    await self._call(interaction)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\ext\commands\hybrid.py", line 438, in _invoke_with_namespace
+    value = await self._do_call(ctx, ctx.kwargs)  # type: ignore
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\commands.py", line 851, in _do_call
+    return await self._callback(interaction, **params)  # type: ignore
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\events\event.py", line 142, in edit_voice
+    event_id = await ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\events\scheduled_events.py", line 72, in find_guild_event
+    if event["name"] == target_name:
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 1197, in trace_dispatch
+    self.do_wait_suspend(thread, frame, event, arg)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 165, in do_wait_suspend
+    self._args[0].do_wait_suspend(*args, **kwargs)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2070, in do_wait_suspend
+    keep_suspended = self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread, frames_tracker)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2106, in _do_wait_suspend
+    time.sleep(0.01)
+
+2023-02-18 16:24:27,377:WARNING:discord.gateway: Shard ID None heartbeat blocked for more than 40 seconds.
+Loop thread traceback (most recent call last):
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\__main__.py", line 39, in <module>
+    cli.main()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 430, in main
+    run()
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy/..\debugpy\server\cli.py", line 284, in run_file
+    runpy.run_path(target, run_name="__main__")
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 321, in run_path
+    return _run_module_code(code, init_globals, run_name,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 135, in _run_module_code
+    _run_code(code, mod_globals, init_globals,
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_runpy.py", line 124, in _run_code
+    exec(code, run_globals)
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\barmaid.py", line 247, in <module>
+    CLIENT.run(CONNECTION_TOKEN)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\client.py", line 828, in run
+    asyncio.run(runner())
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 629, in run_until_complete
+    self.run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\windows_events.py", line 316, in run_forever
+    super().run_forever()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 596, in run_forever
+    self._run_once()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\base_events.py", line 1890, in _run_once
+    handle._run()
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\asyncio\events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1089, in wrapper
+    await self._call(interaction)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\tree.py", line 1240, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\ext\commands\hybrid.py", line 438, in _invoke_with_namespace
+    value = await self._do_call(ctx, ctx.kwargs)  # type: ignore
+  File "C:\Users\Luky\AppData\Local\Programs\Python\Python39\lib\site-packages\discord\app_commands\commands.py", line 851, in _do_call
+    return await self._callback(interaction, **params)  # type: ignore
+  File "c:\Users\Luky\Documents\Discord Bot\barmaid\events\event.py", line 149, in edit_voice
+    resp = await ScheduledEvents.modify_guild_event(
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 1197, in trace_dispatch
+    self.do_wait_suspend(thread, frame, event, arg)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\_pydevd_bundle\pydevd_frame.py", line 165, in do_wait_suspend
+    self._args[0].do_wait_suspend(*args, **kwargs)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2070, in do_wait_suspend
+    keep_suspended = self._do_wait_suspend(thread, frame, event, arg, suspend_type, from_this_thread, frames_tracker)
+  File "c:\Users\Luky\.vscode\extensions\ms-python.python-2023.2.0\pythonFiles\lib\python\debugpy\_vendored\pydevd\pydevd.py", line 2106, in _do_wait_suspend
+    time.sleep(0.01)
+
+2023-02-18 16:24:36,993:INFO:discord.gateway: Shard ID None has successfully RESUMED session 3050cdcb0c2c0158bc0df1c661e19380.
+2023-02-18 16:24:37,133:INFO:discord: Patch success: to https://discord.com/api/v8/guilds/907946271946440745/scheduled-events/1076522729940996116

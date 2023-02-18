@@ -586,6 +586,9 @@ async def message(ctx:commands.Context, *, message:str):
         await ctx.send(f"**{ctx.guild.name}** Cannot sent because server member count" +
             f" exceeded limit of {S.MASSDM_EXPLOIT_LIMIT}",
             delete_after=S.DELETE_COMMAND_INVOKE)
+        return
+    await ctx.send(f"You're not the owner of this server, sorry.", 
+                   delete_after=S.DELETE_COMMAND_ERROR)
 
 @massdm.error
 async def massdm_error(error:errors, ctx:commands.Context):
@@ -643,6 +646,10 @@ async def embedded(ctx:commands.Context, message:str, footer:str,
         await ctx.send(f"**{ctx.guild.name}** Cannot sent because server member count" +
             f" exceeded limit of {S.MASSDM_EXPLOIT_LIMIT}",
             delete_after=S.DELETE_COMMAND_INVOKE)
+        return
+    await ctx.send(f"You're not the owner of this server, sorry.", 
+                   delete_after=S.DELETE_COMMAND_ERROR)
+
     
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()

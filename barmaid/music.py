@@ -3,7 +3,8 @@ import discord
 import asyncio
 import requests
 import random
-import youtube_dl
+# import youtube_dl
+import yt_dlp
 from log.error_log import setup_logging
 from discord.ext import commands
 
@@ -18,13 +19,14 @@ _queues = {}
 _list_names = {}
 _yt_dl_options = {
         'format': 'bestaudio/best',
+        'ignoreerrors': True,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
     }
-_ytdl = youtube_dl.YoutubeDL(_yt_dl_options)
+_ytdl = yt_dlp.YoutubeDL(_yt_dl_options)
 _ffmpeg_options = {"options": "-vn"}
 _JUKEBOX_ERROR = "Sorry, something unexpected sent wrong with jukebox." \
     " Please try again later."
@@ -58,8 +60,8 @@ async def play(ctx:commands.Context, url:str):
     loop = asyncio.get_event_loop()
     try:
         data = await loop.run_in_executor(None, lambda: _ytdl.extract_info(url, download=False))
-    except:
-        await ctx.send("Wrong URL.", S.DELETE_COMMAND_ERROR)
+    except yt_dlp.DownloadError as e:
+        await ctx.send(e, S.DELETE_COMMAND_ERROR)
         return
     if not names:
         name = list(data["title"])
@@ -87,16 +89,17 @@ async def play_next(ctx:commands.Context):
         ctx (commands.Context): _description_
     """
     try:
-        _list_names[ctx.guild.id].pop()
+        now_playing = _list_names[ctx.guild.id].pop(0)
     except:
         pass
-    queue = _queues[ctx.guild.id]
+    queue:asyncio.Queue = _queues[ctx.guild.id]
+    if queue.empty():
+        return
     url = await queue.get()
-
+    
     loop = asyncio.get_event_loop()
     data = await loop.run_in_executor(None, lambda: _ytdl.extract_info(url, download=False)) # meanwhile v loopu může běžet něco jiného než se extract dokončí
     music = data["url"]
-    _t = data["title"]
 
     
     player = discord.FFmpegPCMAudio(music, **_ffmpeg_options)
@@ -107,8 +110,8 @@ async def play_next(ctx:commands.Context):
     voice_client.play(player, after=lambda e:
         asyncio.run_coroutine_threadsafe(play_next(ctx), loop=loop))
     voice_client.player = player
-    voice_client.now_playing = data
-    log.info(f"Playing success: {_t}, at {ctx.guild.name}")
+    voice_client.now_playing = now_playing if now_playing is not None else ""
+    log.info(f"Playing success: {now_playing}, at {ctx.guild.name}")
 
 @commands.hybrid_command(with_app_command=True, name="play-playlist")
 @commands.guild_only()
@@ -127,14 +130,18 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
     # retrieve the list of URLs in the playlist
     names = _list_names.get(ctx.guild.id)
     loop = asyncio.get_event_loop()
-    try:
-        data = await loop.run_in_executor(None, lambda:
+    data = await loop.run_in_executor(None, lambda:
             _ytdl.extract_info(playlist_url, download=False))
-    except:
-        await ctx.send("Wrong URL.", S.DELETE_COMMAND_ERROR)
-        return
-    urls = [entry["url"] for entry in data["entries"]]
-    data_names = [entry["title"] for entry in data["entries"]]
+    
+    urls = []
+    data_names = []    
+    # urls = [entry["url"] for entry in data["entries"]]
+    # data_names = [entry["title"] for entry in data["entries"]]
+    for entry in data["entries"]:
+        if entry is None:
+            continue
+        urls.append(entry["url"])
+        data_names.append(entry["title"])
     if not names:
         _list_names[ctx.guild.id] = data_names
     else:
@@ -155,8 +162,8 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
 
     voice_client = _voice_clients.get(ctx.guild.id)
     if not voice_client:
-        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
         voice_client = await ctx.author.voice.channel.connect()
+        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
         _voice_clients[ctx.guild.id] = voice_client
     if not voice_client.is_playing():
         await play_next(ctx)
@@ -214,9 +221,9 @@ async def resume(ctx:commands.Context):
         await ctx.send(_JUKEBOX_ERROR,
                        ephemeral=True, delete_after=S.DELETE_EPHEMERAL)  
 
-@commands.command(with_app_command=True)
+@commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
-async def skip(ctx: commands.Context):
+async def next(ctx: commands.Context):
     """Skips the current playing song.
     
     Args:
@@ -228,9 +235,10 @@ async def skip(ctx: commands.Context):
         voice_client.stop()
         await play_next(ctx)
         await ctx.send("Song skipped!",
-                       ephemeral=True, delete_after=S.DELETE_EPHEMERAL)
+                       delete_after=S.DELETE_EPHEMERAL)
     else:
-        await ctx.send("Nothing is currently playing.")
+        await ctx.send("Nothing is currently playing.",
+                       S.DELETE_EPHEMERAL)
               
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
@@ -283,7 +291,6 @@ async def queue(ctx: commands.Context):
             break
     await ctx.send(message, delete_after=S.DELETE_MINUTE)
     
-    
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
 async def shazam(ctx: commands.Context):
@@ -294,14 +301,15 @@ async def shazam(ctx: commands.Context):
     """
     await ctx.defer(ephemeral=True)
 
-    vc = _voice_clients.get(ctx.guild.id)
+    try:
+        vc:discord.VoiceClient = _voice_clients[ctx.guild.id]
+    except KeyError:
+        await ctx.send("Not playing!", delete_after=S.DELETE_EPHEMERAL)
+        return
     song = vc.now_playing
     
-    title = song["title"]
-    message = title + "\n" + song["url"]
-    await ctx.send(message, delete_after=S.DELETE_MINUTE)
+    await ctx.send(f"Song: `{song}`", delete_after=S.DELETE_MINUTE)
            
-                   
 async def setup(bot:commands.Bot):
     """Setup function which allows this module to be an extension
     loaded into the main file.
@@ -319,7 +327,8 @@ async def setup(bot:commands.Bot):
     bot.add_command(resume)
     bot.add_command(volume)
     bot.add_command(queue)
-    bot.add_command(skip)
+    bot.add_command(next)
+    bot.add_command(shazam)
 
     CLIENT = bot
 
