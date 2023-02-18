@@ -61,7 +61,7 @@ For Windows [little more for that here](https://phoenixnap.com/kb/windows-set-en
 ```
 setx DISCORD_BOT_TOKEN="your_token_here"
 ```
-Once again from [Discord Developer Portal](https://discord.com/developers/applications) create an invitation link to add your bot to discord servers. Give it `administator` and select scope to `application.commands.` Copy generated invite link and fill accordingly to config.
+Once again from [Discord Developer Portal](https://discord.com/developers/applications) create an invitation link to add your bot to discord servers. Give it `administrator` and select scope to `application.commands.` Copy generated invite link and fill accordingly to config.
 
 Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, BOT_ID`:
 ```json
