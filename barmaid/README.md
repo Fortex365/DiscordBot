@@ -73,7 +73,9 @@ Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, 
     "DELETE_EMBED_HELP": 120
   },
   "Activity": {
-    "CLIENT_ACTIVITY": "Your local e-Barmaid"
+    "CLIENT_ACTIVITY": ["Your Barmaid!",
+     "Serving drinks!",
+      "Local Pub."]
   },
   "DATABASE_FILE_NAME": "data.json",
   "GLOBAL_NAUGHTY_LIST": "naughty_list.json",
