@@ -84,7 +84,7 @@ Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, 
 ```
 After you're done editting, it's time to run it!
 ```
-python .\barmaid
+python barmaid.py
 ```
 For running script on Linux server I suggest you to use `screen` first to make the script running even after your session from server is abandoned. Then you can `Ctrl + A + D` to detach from session before you close [PuTTY](https://www.putty.org/).
 ```
