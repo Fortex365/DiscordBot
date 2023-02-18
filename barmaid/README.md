@@ -15,7 +15,7 @@ Bot by měl sloužit k obecným potřebám různorodých komunit využívající
 např. Bot bude zprostředkovávat vytváření a plánování eventů pro uživatele komunity a jejich účasti 
 na daném eventu. Dále bude Bot sloužit jako administrátorský nástroj pro administrátora komunity např. 
 hromadné mazání a posílání zpráv, hromadné přesouvání uživatelů, a samotné zprostředkování pravidel pro komunitu.
-V neposlední řadě bude Bot moci streamovat v tzv. Voice Channels hudbou zadanou odkazem např. ze Spotify, Youtube.
+V neposlední řadě bude Bot moci streamovat v tzv. Voice Channels hudbu zadanou odkazem např. ze Spotify, Youtube.
 ```
 
 ## Code asignment [EN]:
