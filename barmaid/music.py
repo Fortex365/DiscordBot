@@ -27,7 +27,10 @@ _yt_dl_options = {
         }],
     }
 _ytdl = yt_dlp.YoutubeDL(_yt_dl_options)
-_ffmpeg_options = {"options": "-vn"}
+_ffmpeg_options = {
+    "options": "-vn",
+    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+                   }
 _JUKEBOX_ERROR = "Sorry, something unexpected sent wrong with jukebox." \
     " Please try again later."
 
