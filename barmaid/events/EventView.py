@@ -163,7 +163,7 @@ class EventView(View):
                 limit = text[2]
             except IndexError:
                 limit = "9999"
-            limit_value = int(limit.removesuffix(")"))
+            limit_value = int(limit.replace(")", ""))
             if not new_value == limit_value:
                 await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
                         votes)
@@ -202,7 +202,8 @@ class EventView(View):
         if EventView.is_cancelled(origin_embed):
             return
         
-        v:str = v.removeprefix("N/A") if "N/A" in v else v
+        # v:str = v.removeprefix("N/A") if "N/A" in v else v
+        v:str = "" if "N/A" in v else v
     
         
         if does_embed_include_names(origin_embed):
@@ -226,8 +227,8 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("sign", origin_embed, interaction, clicked_by)
-            await self.enable_all_buttons()
-            button.disabled = True
+            # await self.enable_all_buttons()
+            # button.disabled = True
             
     @button(label="Decline", style=ButtonStyle.gray, emoji="✖")
     async def decline(self, interaction: Interaction, button:Button):
@@ -248,7 +249,8 @@ class EventView(View):
         if EventView.is_cancelled(origin_embed):
             return
         
-        v:str = v.removeprefix("N/A") if "N/A" in v else v
+        # v:str = v.removeprefix("N/A") if "N/A" in v else v
+        v:str = "" if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
             new_emb = EventView.del_name_occurance(origin_embed, clicked_by)
@@ -259,8 +261,8 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("decline", origin_embed, interaction, clicked_by)
-            await self.enable_all_buttons()
-            button.disabled = True
+            # await self.enable_all_buttons()
+            # button.disabled = True
     
     @button(label="Tentative", style=ButtonStyle.gray, emoji="➖")
     async def tentative(self, interaction: Interaction, button:Button):
@@ -281,7 +283,8 @@ class EventView(View):
         if EventView.is_cancelled(origin_embed):
             return
         
-        v:str = v.removeprefix("N/A") if "N/A" in v else v
+        # v:str = v.removeprefix("N/A") if "N/A" in v else v
+        v:str = "" if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
             new_emb = EventView.del_name_occurance(origin_embed, clicked_by)
@@ -292,8 +295,8 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("tentative", origin_embed, interaction, clicked_by)
-            await self.enable_all_buttons()
-            button.disabled = True
+            # await self.enable_all_buttons()
+            # button.disabled = True
             
     @button(label="Cancel", style=ButtonStyle.gray, emoji="⚙")
     async def cancel(self, interaction: Interaction, button:Button):

@@ -17,6 +17,7 @@ CLIENT:commands.Bot = None
 _voice_clients = {}
 _queues = {}
 _list_names = {}
+_volumes = {}
 _yt_dl_options = {
         'format': 'bestaudio/best',
         'ignoreerrors': True,
@@ -107,7 +108,11 @@ async def play_next(ctx:commands.Context):
     
     player = discord.FFmpegPCMAudio(music, **_ffmpeg_options)
     if not player.is_opus():
-        player = discord.PCMVolumeTransformer(player, volume=1.0)
+        try:
+            current_volume:float = _volumes[ctx.guild.id]
+        except KeyError:
+            current_volume:float = 1.0
+        player = discord.PCMVolumeTransformer(player, volume=current_volume)
         
     voice_client = _voice_clients[ctx.guild.id]
     voice_client.play(player, after=lambda e:
@@ -264,10 +269,11 @@ async def volume(ctx:commands.Context, volume:int):
                 vc.player.volume = volume / 100
             except:
                 await ctx.send(_JUKEBOX_ERROR, ephemeral=True,
-                   delete_after=S.DELETE_EPHEMERAL)
+                   delete_after=S.DELETE_COMMAND_ERROR)
                 return
             await ctx.send("Success!", ephemeral=True,
                            delete_after=S.DELETE_EPHEMERAL)
+        _volumes[ctx.guild.id] = volume / 100
             
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()

@@ -1125,7 +1125,7 @@ def remove_dups(l:list):
     Returns:
         list: New list without dup values
     """
-    return list(set(l))     
+    return list(dict.fromkeys(l))   
  
 async def setup(target: commands.Bot):
     """Setup function which allows this module to be

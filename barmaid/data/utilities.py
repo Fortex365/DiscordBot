@@ -30,13 +30,7 @@ async def load_config():
         print("Config loading failed. App launch terminated.")
         sys.exit()
     return _dict
-    
-#try:
-#    with open(CONFIG_FILE_NAME, READ_MODE) as f:
-#        settings = json.load(f)
-#except OSError:
-#        pass
-    
+        
 settings = asyncio.run(load_config())
 
 msg_stngs = settings['DeleteMessages']      
