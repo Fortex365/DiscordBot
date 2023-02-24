@@ -15,7 +15,7 @@ Bot by měl sloužit k obecným potřebám různorodých komunit využívající
 např. Bot bude zprostředkovávat vytváření a plánování eventů pro uživatele komunity a jejich účasti 
 na daném eventu. Dále bude Bot sloužit jako administrátorský nástroj pro administrátora komunity např. 
 hromadné mazání a posílání zpráv, hromadné přesouvání uživatelů, a samotné zprostředkování pravidel pro komunitu.
-V neposlední řadě bude Bot moci streamovat v tzv. Voice Channels hudbou zadanou odkazem např. ze Spotify, Youtube.
+V neposlední řadě bude Bot moci streamovat v tzv. Voice Channels hudbu zadanou odkazem např. ze Spotify, Youtube.
 ```
 
 ## Code asignment [EN]:
@@ -53,11 +53,7 @@ sudo apt install ffmpeg
 
 Visit [Discord Developer Portal](https://discord.com/developers/applications) and create new application there and save it's  `token`. KEEP IT SECRET!
 
-For Mac:
-```
-export DISCORD_BOT_TOKEN=your_token_here
-```
-For Linux:
+For Mac/Linux:
 ```
 export DISCORD_BOT_TOKEN=your_token_here
 ```
@@ -65,7 +61,7 @@ For Windows [little more for that here](https://phoenixnap.com/kb/windows-set-en
 ```
 setx DISCORD_BOT_TOKEN="your_token_here"
 ```
-Once again from [Discord Developer Portal](https://discord.com/developers/applications) create an invitation link to add your bot to discord servers. `Give it administator and select scope to application.commands.` Copy generated invite link and fill accordingly to config.
+Once again from [Discord Developer Portal](https://discord.com/developers/applications) create an invitation link to add your bot to discord servers. Give it `administrator` and select scope to `application.commands`. Copy generated invite link and fill accordingly to config.
 
 Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, BOT_ID`:
 ```json
@@ -77,7 +73,9 @@ Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, 
     "DELETE_EMBED_HELP": 120
   },
   "Activity": {
-    "CLIENT_ACTIVITY": "Your local e-Barmaid"
+    "CLIENT_ACTIVITY": ["Your Barmaid!",
+     "Serving drinks!",
+      "Local Pub."]
   },
   "DATABASE_FILE_NAME": "data.json",
   "GLOBAL_NAUGHTY_LIST": "naughty_list.json",
@@ -88,7 +86,7 @@ Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, 
 ```
 After you're done editting, it's time to run it!
 ```
-python .\barmaid
+python barmaid.py
 ```
 For running script on Linux server I suggest you to use `screen` first to make the script running even after your session from server is abandoned. Then you can `Ctrl + A + D` to detach from session before you close [PuTTY](https://www.putty.org/).
 ```
