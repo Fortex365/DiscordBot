@@ -71,6 +71,8 @@ class ScheduledEvents:
         for event in all:
             if event["name"] == target_name:
                 return event["id"]
+            if target_name in event["name"]:
+                return event["id"]
         raise ValueError(f"Event with {target_name=} cannot be found in {guild_id=}")
 
     
@@ -175,15 +177,26 @@ class ScheduledEvents:
         
             await session.close()
             return response
+        
+    @staticmethod
+    async def delete_guild_event(guild_id:int, event_id:str):
+        ENDPOINT_URL = f"{ScheduledEvents.API_URL}/guilds/{guild_id}/scheduled-events/{event_id}"
+        
+        async with aiohttp.ClientSession(headers=ScheduledEvents.AUTH_HEADERS) as session:
+            try:
+                async with session.delete(ENDPOINT_URL) as response:
+                    response.raise_for_status()
+                    assert response.status == 204
+                    log.info(f"Delete success: to {ENDPOINT_URL}")
+            except Exception as e:
+                log.warning(f"Delete error: to {ENDPOINT_URL} as {e}")
+                await session.close()
+                return
+        
+            await session.close()
+            return response
 
     
 if __name__ == "__main__":
     """In case of trying to execute this module, nothing should happen.
     """
-
-    
-""" 
-todo:
-maybe http patch (edit events)
-maybe del event by name
-"""

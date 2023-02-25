@@ -108,12 +108,40 @@ async def events(ctx:commands.Context):
     pass
 
 @events.command()
+async def idelete(ctx:commands.Context, search_by_name:str):
+    """Deletes internal discord event by it's name.
+
+    Args:
+        ctx (commands.Context): Invoke context
+        search_by_name (str): Title of the event to search for.
+    """
+    await ctx.defer(ephemeral=True)
+    
+    try:
+        event_id = await ScheduledEvents.find_guild_event(search_by_name, ctx.guild.id)
+    except:
+        await ctx.send(f"Existing event with name `{search_by_name}` not found.",
+                        delete_after=S.DELETE_COMMAND_ERROR)
+        return
+    
+    resp = await ScheduledEvents.delete_guild_event(ctx.guild.id, event_id)
+    
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+        
+    if resp.status == 204:
+        await ctx.send(f"Deleted event `{search_by_name}`", delete_after=S.DELETE_COMMAND_INVOKE)
+        return
+    await ctx.send(f"Event delete has failed. Try again later.", 
+                   delete_after=S.DELETE_COMMAND_ERROR)
+
+@events.command()
 async def edit_voice(ctx:commands.Context, search_by_name:str, new_title:str, new_description:str, new_start_time:str, new_voice:VoiceChannel, new_end_time:str=None):
     """Edits internal discord event.
 
     Args:
         ctx (commands.Context): Context of invoke
-        search_by_name (str): Old title
+        search_by_name (str): Title of the event to search for.
         new_title (str): Title of event
         new_description (str): Description of event
         new_start_time (str): Use "yy-mm-dd hh:mm" format
@@ -172,7 +200,7 @@ async def edit_location(ctx:commands.Context, search_by_name:str, new_title:str,
 
     Args:
         ctx (commands.Context): Context of invoke
-        search_by_name (str): Old event name
+        search_by_name (str): Title of the event to search for.
         new_title (str): Title of event
         new_description (str): Description of event
         new_start_time (str): Use "yy-mm-dd hh:mm" format. REQUIRED.
@@ -461,4 +489,3 @@ if __name__ == "__main__":
     """In case of trying to execute this module, nothing should happen.
     """
     pass
-

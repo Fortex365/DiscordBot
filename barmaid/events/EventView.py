@@ -434,7 +434,3 @@ if __name__ == "__main__":
     """
     pass
    
-"""
-TO DO:
-disable interaction when event's cancelled
-"""

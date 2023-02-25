@@ -74,6 +74,7 @@ async def change_status():
         activity=Game(status)
     )
 
+
 @CLIENT.event
 async def on_guild_join(guild:Guild):
     """If bots joins new server it adds its guid to a database
