@@ -377,7 +377,8 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     start_time += ":00"
     start_time = MILENIUM + start_time
     # New hash for event
-    hash = uuid.uuid4().hex
+    hash:str = uuid.uuid4().hex
+    hash = hash[:10] # first 10 of the hash to not make it long
     # New event with buttons
     v = EventView()
     default_unknown_value = "N/A" if include_names else "0"
@@ -385,7 +386,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     sign_up_string = f"Sign-ups✅ (limited {limit})" if limit > 0 and not include_names else sign_up_string
     lim = True if limit > 0 else False
     
-    emb = Embed()
+    emb = Embed(color=int("0x2f3136", 0))
     emb.set_author(name=f"by: {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
     emb.add_field(name="Name", value=title, inline=True)
     emb.add_field(name="Date", value=orignal_time, inline=True)
@@ -395,7 +396,9 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     emb.add_field(name="Declined❌", value=default_unknown_value, inline=True)
     emb.add_field(name="Tentative❔", value=default_unknown_value, inline=True)
     emb.add_field(name="\x1D"*10, value="\x1D"*10, inline=True)
-    emb.set_footer(text=f"{hash}, {include_names}, {lim}")
+    include_names = "names" if include_names else "no_names"
+    lim = "limit" if lim else "no_limit"
+    emb.set_footer(text=f"{hash} • {include_names} • {lim}")
     
     ok = await insert_db(DATABASE, ctx.guild.id, hash, {"author": ctx.author.id})
     if not ok:

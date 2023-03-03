@@ -612,7 +612,7 @@ async def embedded(ctx:commands.Context, message:str, footer:str,
     Args:
         ctx (commands.Context): Context of command invocation
         message (str, optional): Message to be sent.
-        color (str, optional): Color of embed. Defaults to "0x00fefe".
+        color (str, optional): Color of embed. Defaults to "0x00fefe". *ADVANCED*
         footer (str, optional): Bottom information of embed.
     """
     await ctx.defer(ephemeral=True)

@@ -21,7 +21,7 @@ def embed_hash(emb:Embed) -> str:
         str: Hash
     """
     footer:str = emb.footer.text
-    hash = footer.split(",")
+    hash = footer.split("•")
     return hash[0]
 
 def does_embed_include_names(emb:Embed) -> bool:
@@ -34,7 +34,7 @@ def does_embed_include_names(emb:Embed) -> bool:
         bool: True if names, False for counting
     """
     footer:str = emb.footer.text
-    include_names:str = footer.split(",")
+    include_names:str = footer.split("•")
     return eval(include_names[1])
 
 def does_embed_have_sign_limit(emb:Embed) -> bool:
@@ -47,7 +47,7 @@ def does_embed_have_sign_limit(emb:Embed) -> bool:
         bool: True if limit, False otherwise
     """
     footer:str = emb.footer.text
-    limit:str = footer.split(",")
+    limit:str = footer.split("•")
     return eval(limit[2])
 
 class EventView(View):

@@ -1,7 +1,8 @@
 import os
-
-import asyncio
 import logging
+import asyncio
+from dotenv import load_dotenv
+
 from datetime import datetime
 from typing import Union
 from discord import Member, Intents, Game, Status, Reaction
@@ -184,7 +185,7 @@ async def check_blacklist(guild:Guild, msg:Message):
             await msg.delete()
             await msg.author.send(f"Word \"{w}\" is restricted to use in `{guild.name}`")
 
-async def check_if_naughty(member:Member):
+async def check_if_naughty(member:Member)->bool:
     """Checks whether or not the member has any records.
 
     Args:
@@ -239,7 +240,7 @@ async def install_extensions(target:commands.Bot):
         
 if __name__ == "__main__":
     """This is main module and only one to be executed."""
-    
+    load_dotenv()
     CONNECTION_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
     loop = asyncio.new_event_loop()
     
