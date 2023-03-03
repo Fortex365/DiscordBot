@@ -386,7 +386,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     sign_up_string = f"Sign-ups✅ (limited {limit})" if limit > 0 and not include_names else sign_up_string
     lim = True if limit > 0 else False
     
-    emb = Embed(color=int("0x2f3136", 0))
+    emb = Embed(color=int("0x36393f", 0))
     emb.set_author(name=f"by: {ctx.author.display_name}", icon_url=ctx.author.avatar.url)
     emb.add_field(name="Name", value=title, inline=True)
     emb.add_field(name="Date", value=orignal_time, inline=True)
