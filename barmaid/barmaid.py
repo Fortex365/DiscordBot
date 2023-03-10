@@ -14,6 +14,7 @@ from discord.ext.commands import Context
 import data.utilities as S
 from data.utilities import DATABASE, NAUGHTY_DB, CLIENT_ACTIVITY
 from data.jsonified_database import id_lookup, insert_db, read_db, add_id, read_id
+from events.EventView import EventView
 from log.error_log import setup_logging
 from re import search
 
@@ -83,9 +84,9 @@ async def on_guild_join(guild:Guild):
     Args:
         guild (Guild): Guild bot joined in
     """
-    success = await add_id(guild.id)
+    success = await add_id(DATABASE, guild.id)
     while not success:
-        success = await add_id(guild.id)
+        success = await add_id(DATABASE, guild.id)
 
 @CLIENT.event
 async def on_member_join(member:Member):
@@ -228,6 +229,7 @@ async def on_message_error(ctx:Context, error):
 async def setup_hook():
     await CLIENT.tree.sync()
     print(f"In-app commands have been synchronized.")
+    CLIENT.add_view(EventView())
 
 async def install_extensions(target:commands.Bot):
     """Install all the extentions in the other files to the client.

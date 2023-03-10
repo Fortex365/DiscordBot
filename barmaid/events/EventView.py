@@ -22,7 +22,9 @@ def embed_hash(emb:Embed) -> str:
     """
     footer:str = emb.footer.text
     hash = footer.split("•")
-    return hash[0]
+    hash = footer.split("•")
+    hash = hash[0].strip(" ")
+    return hash[:10]
 
 def does_embed_include_names(emb:Embed) -> bool:
     """Gets atribute of embed whether use count people or include names.
@@ -35,7 +37,10 @@ def does_embed_include_names(emb:Embed) -> bool:
     """
     footer:str = emb.footer.text
     include_names:str = footer.split("•")
-    return eval(include_names[1])
+    if "no_names" in include_names[1]:
+        return False
+    return True
+    # return eval(include_names[1])
 
 def does_embed_have_sign_limit(emb:Embed) -> bool:
     """Gets atribute of embed whether use limit to sign ups in events.
@@ -48,7 +53,10 @@ def does_embed_have_sign_limit(emb:Embed) -> bool:
     """
     footer:str = emb.footer.text
     limit:str = footer.split("•")
-    return eval(limit[2])
+    if "no_limit" in limit[2]:
+        return False
+    return True
+    # return eval(limit[2])
 
 class EventView(View):
     """Class reprezenting a view for chat based scheduled events.
@@ -183,7 +191,7 @@ class EventView(View):
                                 inline=new_inline)
         await interaction.edit_original_response(embed=changed)  
         
-    @button(label="Accept", style=ButtonStyle.gray, emoji="✔")
+    @button(label="Accept", style=ButtonStyle.gray, emoji="✔", custom_id="persistent:sign")
     async def sign_in(self, interaction: Interaction, button:Button):
         """Button for handling user input to sign into chat-posted scheduled
         event.
@@ -230,7 +238,7 @@ class EventView(View):
             # await self.enable_all_buttons()
             # button.disabled = True
             
-    @button(label="Decline", style=ButtonStyle.gray, emoji="✖")
+    @button(label="Decline", style=ButtonStyle.gray, emoji="✖", custom_id="persistent:decline")
     async def decline(self, interaction: Interaction, button:Button):
         """Button for handling user input to decline into chat-posted scheduled
         event.
@@ -264,7 +272,7 @@ class EventView(View):
             # await self.enable_all_buttons()
             # button.disabled = True
     
-    @button(label="Tentative", style=ButtonStyle.gray, emoji="➖")
+    @button(label="Tentative", style=ButtonStyle.gray, emoji="➖", custom_id="persistent:tentative")
     async def tentative(self, interaction: Interaction, button:Button):
         """Button for handling user input to tentative into chat-posted scheduled
         event.
@@ -298,7 +306,7 @@ class EventView(View):
             # await self.enable_all_buttons()
             # button.disabled = True
             
-    @button(label="Cancel", style=ButtonStyle.gray, emoji="⚙")
+    @button(label="Cancel", style=ButtonStyle.gray, emoji="⚙", custom_id="persistent:cancel")
     async def cancel(self, interaction: Interaction, button:Button):
         await interaction.response.defer()
         clicked_by = interaction.user
