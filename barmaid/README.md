@@ -28,7 +28,7 @@ Lastly, what bot could do is to stream music via Voice Channels on server passed
 ```
 
 # To host bot on your own
-Make sure your machine's running `Python 3.9+`, you can download it [here](https://www.python.org/).
+Make sure your machine's running `Python 3.8+`, you can download it [here](https://www.python.org/).
 
 
 Installing Python for Linux:
@@ -37,7 +37,7 @@ sudo apt install python3-pip
 ```
 To quickly check whether you've Python installed:
 ```
-python --version
+python3 --version
 ```
 To install any requirements needed:
 ```
@@ -51,42 +51,29 @@ For Linux its:
 sudo apt install ffmpeg
 ```
 
-Visit [Discord Developer Portal](https://discord.com/developers/applications) and create new application there and save it's  `token`. KEEP IT SECRET!
+Visit [Discord Developer Portal](https://discord.com/developers/applications) and create new application (convert it to bot) there and save it's  `token`. KEEP IT SECRET!
 
-For Mac/Linux:
+Open `.env-example` file and paste your token here. Rename `.env-example` just to `.env`
 ```
-export DISCORD_BOT_TOKEN=your_token_here
+DISCORD_BOT_TOKEN=your_token_goes_here
 ```
-For Windows [little more for that here](https://phoenixnap.com/kb/windows-set-environment-variable):
-```
-setx DISCORD_BOT_TOKEN="your_token_here"
-```
+
+
 Once again from [Discord Developer Portal](https://discord.com/developers/applications) create an invitation link to add your bot to discord servers. Give it `administrator` and select scope to `application.commands`. Copy generated invite link and fill accordingly to config.
 
-Open `config.json` and edit the following `BOT_URL_AUTH_HEADER, BOT_INVITE_URL, BOT_ID`:
+Open `config.json` and edit the following `BOT_URL_AUTH_HEADER`, `BOT_INVITE_URL`, `BOT_ID` as follows:
 ```json
 {
-  "DeleteMessages": {
-    "DELETE_COMMAND_INVOKE": 15,
-    "DELETE_COMMAND_ERROR": 25,
-    "DELETE_EMBED_POST": 300,
-    "DELETE_EMBED_HELP": 120
-  },
-  "Activity": {
-    "CLIENT_ACTIVITY": ["Your Barmaid!",
-     "Serving drinks!",
-      "Local Pub."]
-  },
-  "DATABASE_FILE_NAME": "data.json",
-  "GLOBAL_NAUGHTY_LIST": "naughty_list.json",
   "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id=821538075078557707",
   "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands",
   "BOT_ID": 821538075078557707
 }
 ```
+Mainly you just focus on the id itself.
+
 After you're done editting, it's time to run it!
 ```
-python barmaid.py
+python3 barmaid.py
 ```
 For running script on Linux server I suggest you to use `screen` first to make the script running even after your session from server is abandoned. Then you can `Ctrl + A + D` to detach from session before you close [PuTTY](https://www.putty.org/).
 ```
@@ -98,21 +85,20 @@ For next resuming the previous session after connecting again to server use:
 screen -r
 ```
 
-# The default prefix bot reacts on server is `..`
+# Use bot with prefix `..` or via slash commands
 :heavy_exclamation_mark::heavy_exclamation_mark::heavy_exclamation_mark:It's suggested to use in-app slash commands.:heavy_exclamation_mark::heavy_exclamation_mark::heavy_exclamation_mark:
 
 Example:
 ```
 ..ping
->>> Pong! Latency is 0ms.
+>>> Pong! Latency is 1ms.
 ```
-# Main module `barmaid.py`
-Brief overview what the module does:
-- Sets up the client permissions
-- Sets up client extensions
-- Sets up client itself
-
-# Configuration file `config.json`
+or
+```
+/ping
+>>> Pong! Latency is 1ms.
+```
+# Rest of configuration file `config.json`
 Can look something like this:
 ```json
 {
@@ -150,7 +136,7 @@ You can modify this data to your own liking:
 
 - invite, bot
 
-- events [ivoice, ilocation, echat]
+- events [ivoice, ilocation, echat, edit_location, edit_voice, idelete]
 
 - filter [show, remove, add]
 
