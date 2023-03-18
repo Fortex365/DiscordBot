@@ -22,7 +22,6 @@ def embed_hash(emb:Embed) -> str:
     """
     footer:str = emb.footer.text
     hash = footer.split("•")
-    hash = footer.split("•")
     hash = hash[0].strip(" ")
     return hash[:10]
 

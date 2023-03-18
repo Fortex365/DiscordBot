@@ -1,1 +1,0 @@
-3 slajdy odstranit, co se Asyncio example týče
