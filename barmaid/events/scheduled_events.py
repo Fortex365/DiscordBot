@@ -20,7 +20,7 @@ class ScheduledEvents:
     load_dotenv()
     TOKEN:str = os.environ.get('DISCORD_BOT_TOKEN')
     BOT_AUTH_HEADER
-    API_URL:str = "https://discord.com/api/v8"
+    API_URL:str = "https://discord.com/api/v10"
     
     AUTH_HEADERS:dict = {
         "Authorization":f"Bot {TOKEN}",
