@@ -18,7 +18,7 @@ class ScheduledEvents:
     EXTERNAL = 3
     
     load_dotenv()
-    TOKEN:str = os.getenv("BARMAIDDEV")
+    TOKEN:str = os.getenv("TOKEN")
     BOT_AUTH_HEADER
     API_URL:str = "https://discord.com/api/v10"
     

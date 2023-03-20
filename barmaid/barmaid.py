@@ -256,7 +256,7 @@ if __name__ == "__main__":
     """This is main module and only one to be executed."""
     # Loads .env file
     load_dotenv()
-    CONNECTION_TOKEN = os.getenv("BARMAIDDEV")
+    CONNECTION_TOKEN = os.getenv("TOKEN")
     
     # Gets the event loop
     loop = asyncio.new_event_loop()
