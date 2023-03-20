@@ -48,7 +48,7 @@ EMBED_HELP_COMMAND_COLOR = Colour.blue()
 Filenames
 """
 DATABASE = settings["DATABASE_FILE_NAME"]
-NAUGHTY_DB = settings["GLOBAL_NAUGHTY_LIST"]
+RECORDS_DB = settings["GLOBAL_NAUGHTY_LIST"]
 
 """
 Activity settings

@@ -1,4 +1,4 @@
-import data.utilities as S
+import data.configuration as S
 import discord
 import asyncio
 import requests
@@ -42,15 +42,15 @@ async def play(ctx:commands.Context, url:str):
 
     Args:
         ctx (commands.Context): Invoke context
-        url (str): Music url. YouTube only.
+        url (str): Music URL. YouTube support only.
     """
     await ctx.defer(ephemeral=True)
     # connect to voice channel if not already connected
     voice_client = _voice_clients.get(ctx.guild.id)
     if not voice_client:
-        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
         voice_client = await ctx.author.voice.channel.connect()
         _voice_clients[ctx.guild.id] = voice_client
+        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
 
     # add the new URL to the queue
     queue = _queues.get(ctx.guild.id)
@@ -90,7 +90,7 @@ async def play_next(ctx:commands.Context):
     from its queue and handles callback for playing the next in queue.
 
     Args:
-        ctx (commands.Context): _description_
+        ctx (commands.Context): Context invoke
     """
     try:
         now_playing = _list_names[ctx.guild.id].pop(0)
@@ -128,7 +128,7 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
 
     Args:
         ctx (commands.Context): Invoke context
-        playlist_url (str): URL containing a playlist
+        playlist_url (str): URL containing a playlist. YouTube supported only.
         shuffle (bool, optional): Whether shuffle or not. Defaults to False.
     """
     await ctx.defer(ephemeral=True)
@@ -171,8 +171,8 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
     voice_client = _voice_clients.get(ctx.guild.id)
     if not voice_client:
         voice_client = await ctx.author.voice.channel.connect()
-        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
         _voice_clients[ctx.guild.id] = voice_client
+        log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
     if not voice_client.is_playing():
         await play_next(ctx)
         await ctx.interaction.followup.send("Playlist started!",
@@ -232,7 +232,7 @@ async def resume(ctx:commands.Context):
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
 async def next(ctx: commands.Context):
-    """Skips the current playing song.
+    """Skips the currently playing song.
     
     Args:
         ctx (commands.Context): Invoke context

@@ -6,9 +6,9 @@ from discord import Interaction, SelectOption, File, Button
 from discord.ext import commands
 from discord.ext.commands import errors
 
-import data.utilities as S
-from data.utilities import NAUGHTY_DB
-from data.utilities import delete_command_user_invoke, database_fail
+import data.configuration as S
+from data.configuration import RECORDS_DB
+from data.configuration import delete_command_user_invoke, database_fail
 from data.jsonified_database import delete_from_db, id_lookup, insert_db, read_db 
 from data.jsonified_database import update_db, add_id, read_id
 from log.error_log import setup_logging
@@ -83,8 +83,8 @@ async def clear(ctx:commands.Context, amount:int=1):
         
 @clear.error
 async def clear_error(ctx:commands.Context, error:errors):
-    await ctx.defer(ephemeral=True)
     # Bot missing permissions
+    await ctx.defer(ephemeral=True)
     if isinstance(error, discord.Forbidden):
         await ctx.send(f"{CLIENT} missing permissions `Manage Messages`",
                         delete_after=S.DELETE_COMMAND_ERROR)
@@ -98,7 +98,7 @@ async def clear_error(ctx:commands.Context, error:errors):
 @commands.hybrid_command(name="id",
                          with_app_command=True)
 async def id(ctx:commands.Context):
-    """Sends you your discord identificator number.
+    """Sends you your user discord identificator number.
     
     Args:
     ctx: Current context of the message that invoked the command.
@@ -125,7 +125,7 @@ async def invoker_id_error(ctx:commands.Context, error:errors,):
 @commands.hybrid_command(name="echo",
                          aliases=["repeat"],
                          with_app_command=True)
-async def echo(ctx:commands.Context, *, message:str=None):
+async def echo(ctx:commands.Context, *, message:str):
     """Echoes the message.
 
     Args:
@@ -135,7 +135,7 @@ async def echo(ctx:commands.Context, *, message:str=None):
     
     await ctx.defer(ephemeral=True)
     if not message:
-        raise commands.CommandError(f"Argument message cannot be empty. Was `{message}`")
+        raise commands.CommandError(f"Argument `message` cannot be empty.")
     
     if ctx.guild and not ctx.interaction:
         await ctx.message.delete()
@@ -145,7 +145,6 @@ async def echo(ctx:commands.Context, *, message:str=None):
 @echo.error
 async def echo_error(ctx:commands.Context, error:errors):
     await ctx.defer(ephemeral=True)
-    
     if isinstance(error, commands.CommandError):
         await ctx.send(error,
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -165,17 +164,16 @@ async def guid(ctx:commands.Context):
         ctx: Context deducted from invocation.
     """
     await ctx.defer(ephemeral=True)
-    server_id = ctx.guild.id
+    guild_id = ctx.guild.id
     if not ctx.interaction:
-        await ctx.message.author.send(f"{server_id = }")
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+        await ctx.message.author.send(f"{guild_id = }")
+        await ctx.message.delete()
         return
-    await ctx.send(f"{server_id = }")
+    await ctx.send(f"{guild_id = }")
     
 @guid.error
-async def guid_error(ctx:commands.Context, error:errors):
-    await ctx.defer(ephemeral=True)
-    
+async def guid_error(ctx:commands.Context, error:errors): 
+    await ctx.defer(ephemeral=True)   
     if isinstance(error, commands.MissingPermissions):
         await ctx.send(error,
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -183,7 +181,7 @@ async def guid_error(ctx:commands.Context, error:errors):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
 
-def _check_prefix(prefix:str):
+def _check_valid_prefix(prefix:str):
     """Checks if input string is valid prefix.
 
     Args:
@@ -228,18 +226,16 @@ async def prefix(ctx:commands.Context):
 
 @prefix.error
 async def prefix_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
     await ctx.send(error,
                    delete_after=S.DELETE_COMMAND_ERROR)
     
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
 
-@commands.hybrid_command(name="setprefix",
-                         aliases=["prefixset"],
-                         with_app_command=True)
+@commands.hybrid_command(name="set-prefix", with_app_command=True)
 @commands.guild_only()
-@commands.has_guild_permissions(administrator=True)
-async def setprefix(ctx:commands.Context, new_prefix:str=None):
+async def prefixset(ctx:commands.Context, new_prefix:str):
     """Sets a new prefix on a server.
 
     Args:
@@ -247,16 +243,25 @@ async def setprefix(ctx:commands.Context, new_prefix:str=None):
         new_prefix (str, optional): Symbol to be the new prefix.
     """
     await ctx.defer(ephemeral=True)
-    SYMBOLS = string.punctuation
     
     if not new_prefix:
-        raise commands.CommandError(f"Argument new_prefix cannot be empty. Was `{new_prefix}`")
+        await ctx.send(f"Argument `new_prefix` cannot be empty.", delete_after=S.DELETE_COMMAND_ERROR)
+        return
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        return
+        
+    SYMBOLS = string.punctuation
     
-    if not _check_prefix(new_prefix):
-        raise commands.CommandError("Prefix cannot have more than one special symbol. " \
-            f"Allowed symbols are:\n > {SYMBOLS}")
+    if not _check_valid_prefix(new_prefix):
+        await ctx.send("Prefix cannot have more than one special symbol. " \
+            f"Allowed symbols are:\n > {SYMBOLS}", delete_after=S.DELETE_COMMAND_ERROR)
+        return
 
-    if not await update_db(DATABASE, ctx.guild.id, 'prefix', new_prefix):
+    changed = await update_db(DATABASE, ctx.guild.id, 'prefix', new_prefix)
+    # changed = await read_db(DATABASE, ctx.guild.id, 'prefix')
+    if not changed:
         await database_fail(ctx)
     else:
         await ctx.send(f"Prefix was set to `{new_prefix}` successfully.", 
@@ -265,39 +270,37 @@ async def setprefix(ctx:commands.Context, new_prefix:str=None):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
 
-@setprefix.error
-async def setprefix_error(ctx:commands.Context, error:errors):
-    await ctx.defer(ephemeral=True)
+# @prefixset.error
+# async def prefixset_error(ctx:commands.Context, error:errors):
+#     await ctx.defer(ephemeral=True)
     
-    if isinstance(error, commands.CommandError):
-        await ctx.send(error,
-                       delete_after=S.DELETE_COMMAND_ERROR)
-    elif isinstance(error, commands.MissingPermissions):
-        await ctx.send(error,
-                       delete_after=S.DELETE_COMMAND_ERROR)
+#     if not ctx.interaction:
+#         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR) 
         
-    if not ctx.interaction:
-        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR) 
+#     if isinstance(error, commands.CommandError):
+#         await ctx.send(error,
+#                        delete_after=S.DELETE_COMMAND_ERROR)
+#         return
+        
         
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
-@commands.has_guild_permissions(kick_members = True)
 @commands.bot_has_guild_permissions(administrator=True)
+@commands.has_guild_permissions(kick_members=True)
 async def kick(ctx:commands.Context,
-                   members:commands.Greedy[Member]=None, *,
+                   members:commands.Greedy[Member], *,
                    reason:str="No reason provided"):
     """Kicks multiple user(s) from server.
 
     Args:
         ctx (commands.Context): Context of command invocation
-        members (commands.Greedy[Member], optional): Multiple mentioned members
-        Defaults to None.
-        reason (str, optional): Anything they did wrong
+        members (commands.Greedy[Member], optional): Multiple mentioned members.
+        reason (str, optional): Anything they did wrong.
     """
     await ctx.defer(ephemeral=True)
     if not members:
         raise commands.CommandError("No people to perform kick operation.")
-
+    
     names = [mem.name for mem in members]
     names_str = ", ".join(names) if len(names) > 1 else names[0]
     
@@ -362,36 +365,37 @@ async def add_to_naughty_list(member:int, guild:Guild, reason:str):
         guild (Guild): Guild banned from
         reason (str): Guild reason banned for
     """    
-    exists = await id_lookup(NAUGHTY_DB, member)
+    exists = await id_lookup(RECORDS_DB, member)
     if not exists:
-        await add_id(NAUGHTY_DB, member)
+        await add_id(RECORDS_DB, member)
         
     info_about_ban = {
         "guild_name": guild.name,
         "reason": reason
     }
-    if not await insert_db(NAUGHTY_DB, member, guild.id, info_about_ban):
-        await update_db(NAUGHTY_DB, member, guild.id, info_about_ban)
+    if not await insert_db(RECORDS_DB, member, guild.id, info_about_ban):
+        await update_db(RECORDS_DB, member, guild.id, info_about_ban)
       
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
-@commands.has_guild_permissions(ban_members = True)
 @commands.bot_has_guild_permissions(administrator = True)
-async def ban(ctx:commands.Context, members:commands.Greedy[Member]=None, *,
+@commands.has_guild_permissions(ban_members=True)
+async def ban(ctx:commands.Context, members:commands.Greedy[Member], *,
               reason:str ="No reason provided", del_msg_in_days:int = 1):
     """Bans the user(s) from the server.
 
     Args:
         ctx (discord.Context): Context of the invoked command.
-        user (discord.Member): Mentioned discord member
-        reason (str, optional): Reason why user was kicked from server.
-        del_msg_in_days (int): Deletes msgs banned user wrote in past days
+        members (discord.Member): Mentioned discord members.
+        reason (str, optional): Reason why user(s) were banned from server.
+        del_msg_in_days (int): Deletes messages banned user(s) wrote in past days.
         Defaults to "No reason provided".
     """
     await ctx.defer(ephemeral=True)
+    
     if not members:
         raise commands.CommandError("No people to perform kick operation.")
-
+    
     names = [mem.name for mem in members]
     names_str = ", ".join(names) if len(names) > 1 else names[0]
     
@@ -451,25 +455,29 @@ async def ban_error(ctx:commands.Context, error:errors):
 
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
-@commands.has_guild_permissions(administrator=True)
-async def naugty(ctx:commands.Context, member:Member):
+async def records(ctx:commands.Context, member:Member):
     """Retrives naughty records for specified member.
 
     Args:
         ctx (commands.Context): Context of invoke
-        member (Member): Member to determine if its naughty
+        member (Member): Member to determine if its naughty.
     """
     await ctx.defer(ephemeral=True)
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    exists = await id_lookup(NAUGHTY_DB, member.id)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
+        
+    exists = await id_lookup(RECORDS_DB, member.id)
     if not exists:
         await ctx.send(f"Discord User: {member} has no records.",
                  delete_after=S.DELETE_COMMAND_INVOKE)
         return
     
-    data = await read_id(NAUGHTY_DB, member.id)
+    data = await read_id(RECORDS_DB, member.id)
     data_items = data.items()
     message = f"User {member} has  `{len(data_items)}` records:\n>>> "
     for _, server_info in data_items:
@@ -478,19 +486,31 @@ async def naugty(ctx:commands.Context, member:Member):
         message += f"{gn} — {r}"
         
     await ctx.send(message, delete_after=S.DELETE_COMMAND_INVOKE)
+    
+@records.error
+async def records_error(ctx:commands.Context, error:errors):
+    await ctx.defer(ephemeral=True)
+    
+    if not ctx.interaction:
+        await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR) 
+        
+    if isinstance(error, commands.CommandError):
+        await ctx.send(error,
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        
         
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
 @commands.has_guild_permissions(move_members=True)
-async def move(ctx:commands.Context, destination:VoiceChannel=None,
-               members:commands.Greedy[Member]=None, *, reason:str=None):
+async def move(ctx:commands.Context, destination:VoiceChannel,
+               members:commands.Greedy[Member], *, reason:str=None):
     """Moves user(s) into targeted voice channel.
 
     Args:
         ctx (commands.Context): Context of command invoke
-        destination (VoiceChannel, optional): Where to move them. Defaults to None.
-        source (VoiceChannel, optional): From where. Defaults to None.
-        reason (str, optional): Why to move them. Defaults to None.
+        destination (VoiceChannel, optional): Where to move them.
+        members (Member, optional): Members to move.
+        reason (str, optional): Why move was performed. Defaults to None.
     """
     await ctx.defer(ephemeral=True)
     if not members:
@@ -544,7 +564,6 @@ async def move_help(ctx:commands.Context):
                 
 @commands.hybrid_group(with_app_command=True, name="admin")
 @commands.guild_only()
-@commands.has_guild_permissions(administrator=True)
 async def massdm(ctx:commands.Context):
     """Server owner can message all of it's members into DM.
 
@@ -559,7 +578,7 @@ async def message(ctx:commands.Context, *, message:str):
 
     Args:
         ctx (commands.Context): Context of command invoke
-        msg (str, optional): Message to send.
+        message (str, optional): Message to send.
     """
     await ctx.defer(ephemeral=True)
     if not message:
@@ -593,12 +612,10 @@ async def message(ctx:commands.Context, *, message:str):
 @massdm.error
 async def massdm_error(error:errors, ctx:commands.Context):
     await ctx.defer(ephemeral=True)
+    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_ERROR)
     
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(error, delete_after=S.DELETE_COMMAND_ERROR)
-        return
     elif isinstance(error, commands.CommandError):
         await ctx.send(error, delete_after=S.DELETE_COMMAND_ERROR)
         return
@@ -612,7 +629,7 @@ async def embedded(ctx:commands.Context, message:str, footer:str,
     Args:
         ctx (commands.Context): Context of command invocation
         message (str, optional): Message to be sent.
-        color (str, optional): Color of embed. Defaults to "0x00fefe". *ADVANCED*
+        color (str, optional): Color in hex value for embed. Defaults to "0x00fefe". *ADVANCED*
         footer (str, optional): Bottom information of embed.
     """
     await ctx.defer(ephemeral=True)
@@ -650,7 +667,6 @@ async def embedded(ctx:commands.Context, message:str, footer:str,
     await ctx.send(f"You're not the owner of this server, sorry.", 
                    delete_after=S.DELETE_COMMAND_ERROR)
 
-    
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
 async def rules(ctx:commands.Context):
@@ -675,15 +691,18 @@ async def rules(ctx:commands.Context):
         
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
-@commands.has_guild_permissions(administrator=True)
 async def addrule(ctx:commands.Context, *, new_rule:str):
     """Allows to append new rules. They're sent to new users on server.
 
     Args:
         ctx (commands.Context): Context of command invoke
-        rules (str, optional): Guild rules.
+        rules (str, optional): New rule to apply.
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("Missing `administrator` permission",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
@@ -703,14 +722,17 @@ async def addrule(ctx:commands.Context, *, new_rule:str):
 
 @commands.hybrid_command(with_app_command=True, name="reset-rules")
 @commands.guild_only()
-@commands.has_guild_permissions(administrator=True)
 async def rules_reset(ctx:commands.Context):
-    """Resets all rules on server.
+    """Resets all rules on server back to zero.
 
     Args:
         ctx (commands.Context): Context of invoke
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("Missing `administrator` permission",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
@@ -724,36 +746,35 @@ async def rules_reset(ctx:commands.Context):
 @addrule.error
 async def setrules_error(ctx:commands.Context, error:errors):
     await ctx.defer(ephemeral=True)
+    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(error,
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        return
+        
     raise error
 
 @rules_reset.error
-async def rules_reset_error(ctx:commands.Context, error:errors):
+async def rules_reset_error(ctx:commands.Context, error:errors):    
     await ctx.defer(ephemeral=True)
+
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(error,
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        return
+
     raise error
 
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
-@commands.has_guild_permissions(administrator=True)
 async def delrule(ctx:commands.Context, index:int):
     """Removes rule at index position.
 
     Args:
         ctx (commands.Context): Context of invoke
-        index (int): Index number
+        index (int): Index number of rule to delete.
     """ 
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("Missing `administrator` permission",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
        
@@ -777,18 +798,16 @@ async def delrule(ctx:commands.Context, index:int):
 @delrule.error
 async def delrule_error(ctx:commands.Context, error:errors):
     await ctx.defer(ephemeral=True)
+    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(error,
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        return
+        
     raise error
     
 @commands.hybrid_command(with_app_command=True, name="bot",
                          aliases=["invitebot", "botinvite", "boturl", "urlbot"])
 async def binvite(ctx:commands.Context):
-    """Invitation link to add bot elsewhere.
+    """Invitation link to add bot somewhere else.
 
     Args:
         ctx (commands.Context): Context of command invoke
@@ -841,7 +860,6 @@ async def finvite_help(ctx:commands.Context):
 @commands.hybrid_group(with_app_command=True,
                          aliases=["asignrole","roleasign"])
 @commands.guild_only()
-@commands.has_guild_permissions(administrator=True)
 async def autorole(ctx:commands.Context):
     """Shows current role set for auto-giving for newly server joins.
 
@@ -857,7 +875,11 @@ async def show(ctx:commands.Context):
     Args:
         ctx (commands.Context): Context of command invoke
     """
-    await ctx.defer(ephemeral=True)    
+    await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE) 
     response = await read_db(DATABASE,ctx.guild.id, "auto-role")
@@ -871,19 +893,19 @@ async def show(ctx:commands.Context):
 
 @autorole.error
 async def autorole_error(error:errors, ctx:commands.Context):
+    await ctx.defer(ephemeral=True)
+
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(error,
-                       delete_after=S.DELETE_COMMAND_ERROR)
-        return
-    elif isinstance(error, commands.CommandError):
+        
+    if isinstance(error, commands.CommandError):
         await ctx.send(error, delete_after=S.DELETE_COMMAND_ERROR)
         return
     elif isinstance(error, commands.BadArgument):
         await ctx.send(error, 
                        delete_after=S.DELETE_COMMAND_ERROR)
         return
+    
     raise error
            
 @autorole.command()
@@ -895,13 +917,21 @@ async def set(ctx:commands.Context, role:Role):
         role (Role, optional): Role to give. MAKE SURE THE ROLE IS BELOW BOTS ROLE IN HIERARCHY!
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not role:
-        raise commands.CommandError("No role has been specified.")
+        await ctx.send("No role has been specified.", 
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        return
     guid = ctx.guild.id
     valid_role = ctx.guild.get_role(role.id)
     
     if not valid_role:
-        raise commands.BadArgument("Role does not exist")
+        await ctx.send("Role does not exist.", delete_after=S.DELETE_COMMAND_ERROR)
+        return
+    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
      
@@ -915,7 +945,7 @@ async def set(ctx:commands.Context, role:Role):
         return
     await database_fail(ctx)
 
-@autorole.command() 
+@autorole.command()
 async def remove(ctx:commands.Context):
     """Removes role for auto-asign on server joins.
 
@@ -923,6 +953,10 @@ async def remove(ctx:commands.Context):
         ctx (commands.Context): Context of command invoke
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                        delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     guid = ctx.guild.id
@@ -953,7 +987,6 @@ async def autorole_help(ctx:commands.Context):
  
 @commands.hybrid_group(with_app_command=True)
 @commands.guild_only()
-@commands.has_guild_permissions(manage_messages=True)
 async def filter(ctx:commands.Context):
     """Filter group command.
 
@@ -970,6 +1003,10 @@ async def show(ctx:commands.Context):
         ctx (commands.Context): Context of invoke
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.manage_messages:
+        await ctx.send("You are missing Manage Messages permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     blacklist:list = await read_db(DATABASE, ctx.guild.id, "blacklist")
@@ -984,13 +1021,17 @@ async def show(ctx:commands.Context):
   
 @filter.command()
 async def add(ctx:commands.Context, *, words:str):
-    """Adds new word to blacklist. Or whole sentence if inside double quotes.
+    """Adds new word to blacklist. Or whole phrase if inside double quotes.
 
     Args:
         ctx (commands.Context): Context of invoke
         words (str): Banned word
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.manage_messages:
+        await ctx.send("You are missing Manage Messages permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     words_each:list = words.split()
@@ -1005,17 +1046,23 @@ async def add(ctx:commands.Context, *, words:str):
                    delete_after=S.DELETE_COMMAND_INVOKE)
 
 @filter.command()
-async def remove(ctx:commands.Context, *, words_to_del:str):
-    """Removes specified word (sentence) from blacklist.
+async def remove(ctx:commands.Context, *, word:str):
+    """Removes specified word (phrase) from blacklist.
 
     Args:
         ctx (commands.Context): Context of invoke
-        words_to_del (str): Word to be revoked from blacklist.
+        word (str): Word to be revoked from blacklist. Phrase
+        must be in quotes.
     """ 
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.manage_messages:
+        await ctx.send("You are missing Manage Messages permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    words:list = words_to_del.split()
+    # words:list = word.split()
+    words = [word]
 
     current_bl:list = await read_db(DATABASE,ctx.guild.id, "blacklist")
     if not current_bl:
@@ -1035,7 +1082,7 @@ async def remove(ctx:commands.Context, *, words_to_del:str):
     if not is_updated:
         await database_fail(ctx)
         return
-    await ctx.send(f"`{words_to_del}` has been removed from blacklist.",
+    await ctx.send(f"`{word}` has been removed from blacklist.",
                    delete_after=S.DELETE_COMMAND_INVOKE)
      
 @helpme.command(name="filter")
@@ -1056,7 +1103,6 @@ async def filter_help(ctx:commands.Context):
 
 @commands.hybrid_group(with_app_command=True, name="moderation")
 @commands.guild_only()
-@commands.has_permissions(administrator=True)
 async def mods_to_notify(ctx:commands.Context):
     pass
 
@@ -1068,6 +1114,10 @@ async def show(ctx:commands.Context):
         ctx (commands.Context): Context of invoke
     """ 
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     mods_id:list = await read_db(DATABASE, ctx.guild.id, "mods_to_notify")
@@ -1089,6 +1139,10 @@ async def add(ctx:commands.Context, member:Member):
         member (Member): User to treat as guild mod
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
@@ -1097,7 +1151,7 @@ async def add(ctx:commands.Context, member:Member):
     if not ok:
         mods_now.append(member.id)
         # remove dups
-        mods_now = remove_dups(mods_now)
+        mods_now = _remove_list_duplicates(mods_now)
         await update_db(DATABASE, ctx.guild.id, "mods_to_notify", mods_now)
     await ctx.send(f"{member} added!", delete_after=S.DELETE_COMMAND_INVOKE)
 
@@ -1109,6 +1163,10 @@ async def reset(ctx:commands.Context):
         ctx (commands.Context): Context of invoke
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.guild_permissions.administrator:
+        await ctx.send("You are missing Administrator permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
+        return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
@@ -1116,8 +1174,8 @@ async def reset(ctx:commands.Context):
     
     await ctx.send("Reset successful.", delete_after=S.DELETE_COMMAND_INVOKE)
 
-def remove_dups(l:list):
-    """Removes any dups in a list
+def _remove_list_duplicates(l:list):
+    """Removes any dups in a list.
 
     Args:
         l (list): List to iterate
@@ -1139,12 +1197,12 @@ async def setup(target: commands.Bot):
         
     COMMANDS_TO_ADD = [
                 ping, clear, id,
-                prefix, setprefix, ban,
+                prefix, prefixset, ban,
                 kick, echo, guid,
                 binvite, finvite, autorole, 
                 massdm, rules, addrule, 
                 filter, helpme, move, 
-                rules_reset, delrule, naugty,
+                rules_reset, delrule, records,
                 mods_to_notify
     ]
     

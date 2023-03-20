@@ -12,8 +12,8 @@
       "Local Pub."]
   },
   "DATABASE_FILE_NAME": "data/data.json",
-  "GLOBAL_NAUGHTY_LIST": "data/naughty_list.json",
-  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id=821538075078557707",
-  "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands",
-  "BOT_ID": 821538075078557707
+  "GLOBAL_NAUGHTY_LIST": "data/user_records.json",
+  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id=1083758193374670939",
+  "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id=1083758193374670939&permissions=8&scope=bot%20applications.commands",
+  "BOT_ID": 1083758193374670939
 }

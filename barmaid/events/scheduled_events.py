@@ -2,7 +2,7 @@ import json
 import os
 import asyncio
 import aiohttp
-from data.utilities import BOT_AUTH_HEADER
+from data.configuration import BOT_AUTH_HEADER
 from log.error_log import setup_logging
 from dotenv import load_dotenv
 
@@ -18,7 +18,7 @@ class ScheduledEvents:
     EXTERNAL = 3
     
     load_dotenv()
-    TOKEN:str = os.environ.get('DISCORD_BOT_TOKEN')
+    TOKEN:str = os.getenv("BARMAIDDEV")
     BOT_AUTH_HEADER
     API_URL:str = "https://discord.com/api/v10"
     

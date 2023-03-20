@@ -11,8 +11,8 @@ from discord.message import Message
 from discord.ext import commands, tasks
 from discord.ext.commands import Context
 
-import data.utilities as S
-from data.utilities import DATABASE, NAUGHTY_DB, CLIENT_ACTIVITY
+import data.configuration as S
+from data.configuration import DATABASE, RECORDS_DB, CLIENT_ACTIVITY
 from data.jsonified_database import id_lookup, insert_db, read_db, add_id, read_id
 from events.EventView import EventView
 from log.error_log import setup_logging
@@ -23,7 +23,7 @@ INTENTS = Intents.default()
 INTENTS.members, INTENTS.presences = True, True
 INTENTS.message_content, INTENTS.reactions = True, True
 
-# Modules to be loaded into client
+# Listed modules to be loaded into client
 EXTENSIONS = [
     "admin_tool",
     "events.event",
@@ -54,9 +54,8 @@ async def get_prefix(client:commands.Bot, message:Message):
 
 # Client has to be top level variable because of @ decorator 
 CLIENT = commands.Bot(command_prefix=get_prefix, intents=INTENTS)
-TREE = CLIENT.tree
 
-# Log handler
+# Create of log handle
 log_handle:logging.Logger = setup_logging()
 
 @CLIENT.event
@@ -76,7 +75,6 @@ async def change_status():
         activity=Game(status)
     )
 
-
 @CLIENT.event
 async def on_guild_join(guild:Guild):
     """If bots joins new server it adds its guid to a database
@@ -84,9 +82,11 @@ async def on_guild_join(guild:Guild):
     Args:
         guild (Guild): Guild bot joined in
     """
-    success = await add_id(DATABASE, guild.id)
-    while not success:
-        success = await add_id(DATABASE, guild.id)
+    id = await add_id(DATABASE, guild.id)
+    prefix = await insert_db(DATABASE, guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
+    while not id or not prefix:
+        id = await add_id(DATABASE, guild.id)
+        prefix = await insert_db(DATABASE, guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
 
 @CLIENT.event
 async def on_member_join(member:Member):
@@ -112,7 +112,7 @@ async def on_member_join(member:Member):
 async def aware_of_naughty(member:Member, guild:Guild):
     mods_id = await read_db(DATABASE, guild.id, "mods_to_notify")
     mods = [guild.get_member(id) for id in mods_id]
-    naughty = await read_id(NAUGHTY_DB, member.id)
+    naughty = await read_id(RECORDS_DB, member.id)
     naugty_items = naughty.items()
     
     for m in mods:
@@ -195,7 +195,7 @@ async def check_if_naughty(member:Member)->bool:
     Returns:
         bool: True if naughty, False if not
     """
-    is_naughty = await id_lookup(NAUGHTY_DB, member.id)
+    is_naughty = await id_lookup(RECORDS_DB, member.id)
     if is_naughty:
         return True
     return False
@@ -220,15 +220,27 @@ async def on_command_error(ctx:Context, error:commands.CommandError):
     """
     if isinstance(error, commands.CommandNotFound):
         await ctx.send(error, ephemeral=True)
-   
-@CLIENT.event
+        return
+    # if isinstance(error, commands.MissingPermissions):
+    #     await ctx.send(error,
+    #                    delete_after=S.DELETE_COMMAND_ERROR)
+    # if isinstance(error, commands.HybridCommandError):
+    #     await ctx.send("No permissions to do that.",
+    #                    delete_after=S.DELETE_COMMAND_ERROR)
+
+@CLIENT.event        
 async def on_message_error(ctx:Context, error):
     pass
 
 @CLIENT.event
 async def setup_hook():
-    await CLIENT.tree.sync()
+    """Syncs slash commands in all connected guilds and makes buttons
+    restart persistent.
+    """
+    synced_commands =  await CLIENT.tree.sync()
     print(f"In-app commands have been synchronized.")
+    synced_commands = [sc.name for sc in synced_commands]
+    print(f"Following were affected: {synced_commands}")
     CLIENT.add_view(EventView())
 
 async def install_extensions(target:commands.Bot):
@@ -242,10 +254,14 @@ async def install_extensions(target:commands.Bot):
         
 if __name__ == "__main__":
     """This is main module and only one to be executed."""
+    # Loads .env file
     load_dotenv()
-    CONNECTION_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
+    CONNECTION_TOKEN = os.getenv("BARMAIDDEV")
+    
+    # Gets the event loop
     loop = asyncio.new_event_loop()
     
-    # Boots up the client
+    # Puts the load of dependency files into loop
     loop.run_until_complete(install_extensions(CLIENT))
+    # Starts the bot client
     CLIENT.run(CONNECTION_TOKEN)

@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 import uuid
 
 from data.jsonified_database import insert_db, read_db, update_db
-import data.utilities as S
-from data.utilities import DATABASE, delete_command_user_invoke
+import data.configuration as S
+from data.configuration import DATABASE, delete_command_user_invoke
 from events.EventView import EventView
 from events.scheduled_events import ScheduledEvents
 
@@ -103,7 +103,6 @@ async def format_time(in_str:str) -> str:
 
 @commands.hybrid_group(with_app_command=True)
 @commands.guild_only()
-@commands.has_permissions(manage_messages=True)
 async def events(ctx:commands.Context):
     pass
 
@@ -363,6 +362,11 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
         voice (VoiceChannel): Voice channel
     """
     # Will be long interaction
+    if not ctx.author.guild_permissions.manage_messages:
+        await ctx.defer(ephemeral=True)
+        await ctx.send("You are missing Manage Messages permission(s) to run this command.",
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        return
     await ctx.defer()
     if "cancelled" in title:
         await ctx.send("Title cannot include word `cancelled` in it.",

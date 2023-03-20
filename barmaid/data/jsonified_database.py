@@ -7,8 +7,6 @@ from log.error_log import setup_logging
 
 log = setup_logging()
 
-# DATABASE = "data/data.json"
-
 READ_FLAG = "r"
 WRITE_FLAG = "w"
 READ_WRITE_FLAG = "rw"
@@ -123,7 +121,7 @@ async def read_id(file_name:str, id:int):
     except KeyError as e:
         return None
 
-@async_lru_cache
+# @async_lru_cache
 async def update_db(file_name:str, id:int, key:str, new_value):
     """Updates existing key-pair in the database stored by id (guild | member).
     If no such key exists, the key is added and asigned with new_value.

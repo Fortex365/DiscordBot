@@ -2,8 +2,8 @@ from typing import Union
 from functools import lru_cache
 from data.jsonified_database import insert_db, read_db, update_db
 
-import data.utilities as S
-from data.utilities import DATABASE
+import data.configuration as S
+from data.configuration import DATABASE
 
 from discord import Embed, Member
 from discord import User
@@ -169,7 +169,7 @@ class EventView(View):
                 text = new_name.split(" ")
                 limit = text[2]
             except IndexError:
-                limit = "9999"
+                limit = "999999" # only up to a 1M signups
             limit_value = int(limit.replace(")", ""))
             if not new_value == limit_value:
                 await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed),
