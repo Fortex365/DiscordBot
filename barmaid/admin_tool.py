@@ -1007,8 +1007,10 @@ async def show(ctx:commands.Context):
         await ctx.send("You are missing Manage Messages permission(s) to run this command.",
                        delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
         return
+    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
+        
     blacklist:list = await read_db(DATABASE, ctx.guild.id, "blacklist")
 
     if not blacklist:
@@ -1016,29 +1018,36 @@ async def show(ctx:commands.Context):
         return
 
     blacklist_str = "\n".join(blacklist)
-    await ctx.send(f"Blacklisted words are:\n >>> {blacklist_str}", 
+    await ctx.send(f"Blacklisted entries are:\n >>> {blacklist_str}", 
                     delete_after=S.DELETE_COMMAND_INVOKE)
   
 @filter.command()
-async def add(ctx:commands.Context, *, words:str):
+async def add(ctx:commands.Context, entry:str):
     """Adds new word to blacklist. Or whole phrase if inside double quotes.
 
     Args:
         ctx (commands.Context): Context of invoke
-        words (str): Banned word
+        entry (str): Banned word or phrase (must be in quotes).
     """
     await ctx.defer(ephemeral=True)
+    
     if not ctx.author.guild_permissions.manage_messages:
         await ctx.send("You are missing Manage Messages permission(s) to run this command.",
                        delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
         return
+    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    words_each:list = words.split()
+        
+    exists = await read_db(DATABASE, ctx.guild.id, "guild-rules")
+    if not exists:
+        blacklist:list = []
+    else:
+        blacklist = [exists]
 
-    is_ok = await insert_db(DATABASE, ctx.guild.id, "blacklist", words_each)
+    is_ok = await insert_db(DATABASE, ctx.guild.id, "blacklist", blacklist)
     if not is_ok:
-        is_updated = await update_db(DATABASE, ctx.guild.id, "blacklist", words_each)
+        is_updated = await update_db(DATABASE, ctx.guild.id, "blacklist", blacklist)
         if not is_updated:
             await database_fail(ctx)
             return
@@ -1046,12 +1055,12 @@ async def add(ctx:commands.Context, *, words:str):
                    delete_after=S.DELETE_COMMAND_INVOKE)
 
 @filter.command()
-async def remove(ctx:commands.Context, *, word:str):
+async def remove(ctx:commands.Context, entry:str):
     """Removes specified word (phrase) from blacklist.
 
     Args:
         ctx (commands.Context): Context of invoke
-        word (str): Word to be revoked from blacklist. Phrase
+        entry (str): Word to be revoked from blacklist. Phrase
         must be in quotes.
     """ 
     await ctx.defer(ephemeral=True)
@@ -1061,8 +1070,6 @@ async def remove(ctx:commands.Context, *, word:str):
         return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    # words:list = word.split()
-    words = [word]
 
     current_bl:list = await read_db(DATABASE,ctx.guild.id, "blacklist")
     if not current_bl:
@@ -1070,19 +1077,18 @@ async def remove(ctx:commands.Context, *, word:str):
                        delete_after=S.DELETE_COMMAND_ERROR)
         return
     
-    for w in words:
-        for _ in current_bl:
-            if w == _:
-                try:
-                    current_bl.remove(w)
-                except ValueError as e:
-                    continue
+    for _ in current_bl:
+        if entry == _:
+            try:
+                current_bl.remove(entry)
+            except ValueError as e:
+                continue
                 
     is_updated = await update_db(DATABASE, ctx.guild.id, "blacklist", current_bl)
     if not is_updated:
         await database_fail(ctx)
         return
-    await ctx.send(f"`{word}` has been removed from blacklist.",
+    await ctx.send(f"`{entry}` has been removed from blacklist.",
                    delete_after=S.DELETE_COMMAND_INVOKE)
      
 @helpme.command(name="filter")
@@ -1096,8 +1102,8 @@ async def filter_help(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     emb = Embed(title="Help: filter",
-                description="<prefix>filter add word1 word2 ... wordn\n" \
-                    "<prefix>filter remove word1",
+                description="<prefix>filter add entry\n" \
+                    "<prefix>filter remove entry",
                     color=S.EMBED_HELP_COMMAND_COLOR)    
     await ctx.send(embed=emb, delete_after=S.DELETE_EMBED_HELP)
 
