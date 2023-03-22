@@ -1,11 +1,11 @@
-2023-03-20 10:39:22,581:INFO:discord.client: logging in using static token
-2023-03-20 10:39:23,628:INFO:discord.gateway: Shard ID None has connected to Gateway (Session ID: ba474b93a9f6aa3917bdec902c9a7317).
-2023-03-20 10:41:19,620:INFO:discord.voice_client: Connecting to voice...
-2023-03-20 10:41:19,620:INFO:discord.voice_client: Starting voice handshake... (connection attempt 1)
-2023-03-20 10:41:19,848:INFO:discord.voice_client: Voice handshake complete. Endpoint found frankfurt6000.discord.media
-2023-03-20 10:41:20,004:INFO:discord: Connecting success: to General in barmaid-dev
-2023-03-20 10:41:21,224:INFO:discord: Playing success: Bakermat - Baianá (Official Video), at barmaid-dev
-2023-03-20 10:41:33,965:INFO:discord.voice_client: The voice handshake is being terminated for Channel ID 1083759552551473215 (Guild ID 1083759550957629440)
-2023-03-20 10:41:33,966:INFO:discord.voice_client: Disconnecting from voice normally, close code 1000.
-2023-03-20 10:41:33,977:INFO:discord.player: ffmpeg process 22984 has not terminated. Waiting to terminate...
-2023-03-20 10:41:33,981:INFO:discord.player: ffmpeg process 22984 should have terminated with a return code of 1.
+2023-03-22 19:45:51,418:INFO:discord.client: logging in using static token
+2023-03-22 19:45:52,755:INFO:discord.gateway: Shard ID None has connected to Gateway (Session ID: c1e939ccf6dca523dca2f38a40400719).
+2023-03-22 19:46:09,697:INFO:discord.voice_client: Connecting to voice...
+2023-03-22 19:46:09,698:INFO:discord.voice_client: Starting voice handshake... (connection attempt 1)
+2023-03-22 19:46:09,922:INFO:discord.voice_client: Voice handshake complete. Endpoint found frankfurt5842.discord.media
+2023-03-22 19:46:12,644:INFO:discord: Connecting success: to General in barmaid-dev
+2023-03-22 19:46:17,310:INFO:discord: Playing success: Evil Ebenezer - Sunshine, at barmaid-dev
+2023-03-22 19:47:40,446:INFO:discord.voice_client: Disconnected from voice by force... potentially reconnecting.
+2023-03-22 19:47:40,447:INFO:discord.voice_client: Starting voice handshake... (connection attempt 2)
+2023-03-22 19:48:10,462:INFO:discord.voice_client: The voice handshake is being terminated for Channel ID 1083759552551473215 (Guild ID 1083759550957629440)
+2023-03-22 19:48:10,464:INFO:discord.voice_client: Reconnect was unsuccessful, disconnecting from voice normally...

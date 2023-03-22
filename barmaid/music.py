@@ -44,11 +44,13 @@ async def play(ctx:commands.Context, url:str):
         ctx (commands.Context): Invoke context
         url (str): Music URL. YouTube support only.
     """
+    global _voice_clients, _queues, _list_names, _yt_dl_options, _ytdl
+    global _ffmpeg_options, _JUKEBOX_ERROR
     await ctx.defer(ephemeral=True)
     # connect to voice channel if not already connected
     voice_client = _voice_clients.get(ctx.guild.id)
     if not voice_client:
-        voice_client = await ctx.author.voice.channel.connect()
+        voice_client = await ctx.author.voice.channel.connect(timeout=30, reconnect=True)
         _voice_clients[ctx.guild.id] = voice_client
         log.info(f"Connecting success: to {ctx.author.voice.channel.name} in {ctx.guild.name}")
 
