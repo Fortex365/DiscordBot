@@ -52,7 +52,7 @@ async def get_prefix(client:commands.Bot, message:Message):
         prefix = S.DEFAULT_SERVER_PREFIX
     return commands.when_mentioned_or(prefix)(client, message)
 
-# Client has to be top level variable because of @ decorator 
+# Client has to be top level variable because of @ decorator for events
 CLIENT = commands.Bot(command_prefix=get_prefix, intents=INTENTS)
 
 # Create of log handle
@@ -106,10 +106,10 @@ async def on_member_join(member:Member):
     # Auto-rules given by guild
     await send_guild_rules(member, member_guild)
     # Aware moderators of naughty member join
-    if await check_if_naughty(member):
-        await aware_of_naughty(member, member_guild)
+    if await check_records(member):
+        await aware_of_records(member, member_guild)
     
-async def aware_of_naughty(member:Member, guild:Guild):
+async def aware_of_records(member:Member, guild:Guild):
     mods_id = await read_db(DATABASE, guild.id, "mods_to_notify")
     mods = [guild.get_member(id) for id in mods_id]
     naughty = await read_id(RECORDS_DB, member.id)
@@ -118,7 +118,7 @@ async def aware_of_naughty(member:Member, guild:Guild):
     for m in mods:
         await m.send(f"{member} joined {guild.name} with `{len(naugty_items)}` " +
                "naughty records.\nUse `/naughty @mention` on your server " +
-               "to see more information")
+               "to see more information.")
     
 async def send_guild_rules(member:Member, guild_joined:Guild):
     """For newly joined member on a server, bot sends this user server specified
@@ -132,12 +132,12 @@ async def send_guild_rules(member:Member, guild_joined:Guild):
     if guild_rules:
         result:list = []      
         for idx, rule in guild_rules.items():
-            result.append(f"{int(idx)+1}) " + rule)
+            result.append(f"{int(idx)+1}. " + rule)
         formated_output = "\n".join(result)
         emb = Embed(title=f"[{guild_joined.name}] server's rules:",
                     description=formated_output,
                     color=Colour.red())
-        emb.set_footer(text="Using features on that server means you do respect these rules.")
+        emb.set_footer(text="Being part of that server means you do respect these rules.")
         await member.send(embed=emb)
 
 @CLIENT.event    
@@ -186,7 +186,7 @@ async def check_blacklist(guild:Guild, msg:Message):
             await msg.delete()
             await msg.author.send(f"Word \"{w}\" is restricted to use in `{guild.name}`")
 
-async def check_if_naughty(member:Member)->bool:
+async def check_records(member:Member)->bool:
     """Checks whether or not the member has any records.
 
     Args:
@@ -195,8 +195,8 @@ async def check_if_naughty(member:Member)->bool:
     Returns:
         bool: True if naughty, False if not
     """
-    is_naughty = await id_lookup(RECORDS_DB, member.id)
-    if is_naughty:
+    recorded = await id_lookup(RECORDS_DB, member.id)
+    if recorded:
         return True
     return False
 
@@ -244,7 +244,7 @@ async def setup_hook():
     CLIENT.add_view(EventView())
 
 async def install_extensions(target:commands.Bot):
-    """Install all the extentions in the other files to the client.
+    """Installs all the extentions in the other files to the client.
 
     Args:
         client (commands.Bot): Instance of the bot itself.

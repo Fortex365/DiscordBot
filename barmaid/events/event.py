@@ -350,7 +350,9 @@ async def ilocation(ctx:commands.Context, title:str, description:str, start_time
                    delete_after=S.DELETE_COMMAND_ERROR)
 
 @events.command()
-async def echat(ctx:commands.Context, include_names:bool, title:str, description:str, start_time:str, voice:VoiceChannel, limit:int=0):
+async def echat(ctx:commands.Context, include_names:bool, title:str,
+                description:str, start_time:str, voice:VoiceChannel,
+                limit:int=0):
     """External chat-based interactive event via buttons.
 
     Args:
@@ -362,12 +364,12 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
         voice (VoiceChannel): Voice channel
     """
     # Will be long interaction
+    await ctx.defer()
     if not ctx.author.guild_permissions.manage_messages:
         await ctx.defer(ephemeral=True)
         await ctx.send("You are missing Manage Messages permission(s) to run this command.",
                        delete_after=S.DELETE_COMMAND_ERROR)
         return
-    await ctx.defer()
     if "cancelled" in title:
         await ctx.send("Title cannot include word `cancelled` in it.",
                        delete_after=S.DELETE_MINUTE, ephemeral=True)
@@ -399,7 +401,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str, description
     emb.add_field(name=sign_up_string, value=default_unknown_value, inline=True)
     emb.add_field(name="Declined❌", value=default_unknown_value, inline=True)
     emb.add_field(name="Tentative❔", value=default_unknown_value, inline=True)
-    emb.add_field(name="\x1D"*10, value="\x1D"*10, inline=True)
+    # emb.add_field(name="\x1D"*10, value="\x1D"*10, inline=True)
     include_names = "names" if include_names else "no_names"
     lim = "limit" if lim else "no_limit"
     emb.set_footer(text=f"{hash} • {include_names} • {lim}")

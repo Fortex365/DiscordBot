@@ -676,18 +676,21 @@ async def rules(ctx:commands.Context):
         ctx (commands.Context): Context of command invocation
     """
     await ctx.defer(ephemeral=True)
+    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    guild_rules:dict = await read_db(DATABASE, ctx.guild.id, "guild-rules")
+    guild_rules:dict = await read_db(DATABASE, ctx.guild.id,
+                                     "guild-rules")
     if guild_rules:
         result:list = []      
         for idx, rule in guild_rules.items():
-            result.append(f"{int(idx)+1}) " + rule)
+            result.append(f"{int(idx)+1}. " + rule)
         formated_output = "\n".join(result)
         await ctx.send(formated_output, delete_after=S.DELETE_MINUTE)
         return
-    await ctx.send("No rules have been set yet.", delete_after=S.DELETE_COMMAND_INVOKE)
+    await ctx.send("No rules have been set yet.",
+                   delete_after=S.DELETE_COMMAND_INVOKE)
         
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
@@ -713,14 +716,14 @@ async def addrule(ctx:commands.Context, *, new_rule:str):
         rules = exists
     rules[f"{len(rules)}"] = new_rule
     
-    ok_insert = await insert_db(DATABASE, ctx.guild.id, "guild-rules", rules)
     ok_update = await update_db(DATABASE, ctx.guild.id, "guild-rules", rules)
-    if ok_update or ok_insert:
+    if ok_update:
         await ctx.send("New rule applied.")
         return
     await database_fail(ctx)
 
-@commands.hybrid_command(with_app_command=True, name="reset-rules")
+@commands.hybrid_command(with_app_command=True, name="reset-rules", 
+                         aliases=["rules_reset", "reset_rules"])
 @commands.guild_only()
 async def rules_reset(ctx:commands.Context):
     """Resets all rules on server back to zero.
@@ -736,8 +739,8 @@ async def rules_reset(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
-    successfull_remove = await delete_from_db(DATABASE, ctx.guild.id, "guild-rules")
-    if successfull_remove:
+    successful_remove = await delete_from_db(DATABASE, ctx.guild.id, "guild-rules")
+    if successful_remove:
         await ctx.send("Rules no longer apply.", 
                         delete_after=S.DELETE_COMMAND_INVOKE)
         return
