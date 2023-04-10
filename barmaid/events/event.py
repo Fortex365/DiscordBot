@@ -386,7 +386,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str,
     hash:str = uuid.uuid4().hex
     hash = hash[:10] # first 10 of the hash to not make it long
     # New event with buttons
-    v = EventView()
+    buttons = EventView()
     default_unknown_value = "N/A" if include_names else "0"
     sign_up_string = f"Sign-ups✅ 0/{limit}" if limit > 0 and include_names else "Sign-ups✅"
     sign_up_string = f"Sign-ups✅ (limited {limit})" if limit > 0 and not include_names else sign_up_string
@@ -411,7 +411,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str,
         await ctx.send("Something has failed. Try again later.", 
                        delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
         return
-    event_message = await ctx.send(embed=emb, view=v)
+    event_message = await ctx.send(embed=emb, view=buttons)
     try:
         await setup_notification(ctx, emb, event_message.id, start_time)
         log.info(f"Notification set: {ctx.guild.name} at {start_time}")

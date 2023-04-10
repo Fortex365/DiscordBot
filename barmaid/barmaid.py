@@ -117,7 +117,7 @@ async def aware_of_records(member:Member, guild:Guild):
     
     for m in mods:
         await m.send(f"{member} joined {guild.name} with `{len(naugty_items)}` " +
-               "naughty records.\nUse `/naughty @mention` on your server " +
+               "naughty records.\nUse `/records @mention` on your server " +
                "to see more information.")
     
 async def send_guild_rules(member:Member, guild_joined:Guild):
