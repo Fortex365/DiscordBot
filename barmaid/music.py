@@ -47,6 +47,12 @@ async def play(ctx:commands.Context, url:str):
     global _voice_clients, _queues, _list_names, _yt_dl_options, _ytdl
     global _ffmpeg_options, _JUKEBOX_ERROR
     await ctx.defer(ephemeral=True)
+    
+    if not ctx.author.voice:
+        await ctx.send("You're not connected to voice.",
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        return
+    
     # connect to voice channel if not already connected
     voice_client = _voice_clients.get(ctx.guild.id)
     if not voice_client:
@@ -134,6 +140,11 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
         shuffle (bool, optional): Whether shuffle or not. Defaults to False.
     """
     await ctx.defer(ephemeral=True)
+    if not ctx.author.voice:
+        await ctx.send("You're not connected to voice.",
+                       delete_after=S.DELETE_COMMAND_ERROR)
+        return
+    
     await ctx.send(f"May take some time if playlist is huge. " + 
                    "Will start playing as soon as it's ready!", 
                    delete_after=S.DELETE_MINUTE)
