@@ -14,7 +14,7 @@ READ_MODE = "r"
 """
 Server default prefix symbol
 """
-DEFAULT_SERVER_PREFIX = ".."
+DEFAULT_SERVER_PREFIX = "."
 
 """
 Message settings
