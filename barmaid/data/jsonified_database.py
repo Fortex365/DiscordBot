@@ -121,7 +121,6 @@ async def read_id(file_name:str, id:int):
     except KeyError as e:
         return None
 
-# @async_lru_cache
 async def update_db(file_name:str, id:int, key:str, new_value):
     """Updates existing key-pair in the database stored by id (guild | member).
     If no such key exists, the key is added and asigned with new_value.
@@ -142,8 +141,6 @@ async def update_db(file_name:str, id:int, key:str, new_value):
     
     data = await open_file(file_name)
     try:
-#        if not await read_db(file_name, id, key):
-#            return None
         data[id_str][key] = new_value
     except KeyError:
         return None

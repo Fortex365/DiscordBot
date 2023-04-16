@@ -28,63 +28,6 @@ work for example at events.usr_input(ctx, client).
 CLIENT:commands.Bot = None
 log = setup_logging()
 
-# to be del
-async def ask_for(ctx:Context, requested_input:str)->str:
-    # Asks in chat for for requested input
-    await ctx.send(f"{requested_input}", delete_after=S.DELETE_MINUTE)   
-    # Gets in chat asnwer for the input
-    answer = await usr_input(ctx, CLIENT)
-    # If was valid message, sets it to be cleared later
-    await answer.delete(delay=S.DELETE_MINUTE) if answer is not None else None
-    # If was invalid message or timeouted
-    if is_timedout_or_cancelled(answer):
-        return
-    # Parse the answer 
-    answer = None if answer.content == "skip" else answer.content
-    return answer
-
-# to be del             
-def is_timedout_or_cancelled(msg:Message):
-    """Determines if message user responded was timeouted or command cancel
-    message.
-
-    Args:
-        msg (Message): Message we determine
-
-    Returns:
-        bool: True if timeouted or content of message was cancel.
-    """
-    try:
-        if (msg.content == "cancel"):
-            return True
-    except AttributeError:
-        if msg == None:
-            return True
-        return False
-
-# to be del
-async def usr_input(ctx:Context, bot:commands.Bot, timeout:int=60) -> Message:
-    """Waits for input from user in a form of next message.
-
-    Args:
-        ctx (Context): Context where we expect the message
-        bot (commands.Bot): Bot which listens to message
-        timeout (int, optional): Timeout the user has to respond. Defaults to 60.
-
-    Returns:
-        Message: Instance of message bot got in responde, None if user runs out
-        of time.
-    """
-    try:
-        msg:Message = await bot.wait_for("message",
-                                 timeout=timeout,
-                                 check=lambda message: message.author == ctx.author)
-    except asyncio.TimeoutError:
-        await ctx.send("Took you too long to respond!",
-                       delete_after=S.DELETE_MINUTE)
-        return
-    return msg   
-
 async def format_time(in_str:str) -> str:
     """Formats string from %Y-%m-%d %H:%M:%S into ISO8601 format.
 
@@ -401,7 +344,6 @@ async def echat(ctx:commands.Context, include_names:bool, title:str,
     emb.add_field(name=sign_up_string, value=default_unknown_value, inline=True)
     emb.add_field(name="Declined❌", value=default_unknown_value, inline=True)
     emb.add_field(name="Tentative❔", value=default_unknown_value, inline=True)
-    # emb.add_field(name="\x1D"*10, value="\x1D"*10, inline=True)
     include_names = "names" if include_names else "no_names"
     lim = "limit" if lim else "no_limit"
     emb.set_footer(text=f"{hash} • {include_names} • {lim}")
@@ -463,10 +405,7 @@ async def setup_notification(ctx:Context, emb:Embed, message_id:int, time:str):
         # Notify in the channel
         await ctx.send(f"@here Event `{event_name.value}` starting soon!",
                     delete_after=S.DELETE_COMMAND_INVOKE)
-        
-        #new_updated_message = await ctx.fetch_message(message_id)
-        #new_updated_embed = new_updated_message.embeds[0]
-        
+                
         # Notify the signed up members
         name_field = new_updated_embed.fields[4]
         mentions = name_field.value

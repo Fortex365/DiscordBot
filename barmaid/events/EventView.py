@@ -39,7 +39,6 @@ def does_embed_include_names(emb:Embed) -> bool:
     if "no_names" in include_names[1]:
         return False
     return True
-    # return eval(include_names[1])
 
 def does_embed_have_sign_limit(emb:Embed) -> bool:
     """Gets atribute of embed whether use limit to sign ups in events.
@@ -55,7 +54,6 @@ def does_embed_have_sign_limit(emb:Embed) -> bool:
     if "no_limit" in limit[2]:
         return False
     return True
-    # return eval(limit[2])
 
 class EventView(View):
     """Class reprezenting a view for chat based scheduled events.
@@ -209,9 +207,7 @@ class EventView(View):
         if EventView.is_cancelled(origin_embed):
             return
         
-        # v:str = v.removeprefix("N/A") if "N/A" in v else v
         v:str = "" if "N/A" in v else v
-    
         
         if does_embed_include_names(origin_embed):
             new_emb = EventView.del_name_occurance(origin_embed, clicked_by)
@@ -234,8 +230,6 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("sign", origin_embed, interaction, clicked_by)
-            # await self.enable_all_buttons()
-            # button.disabled = True
             
     @button(label="Decline", style=ButtonStyle.gray, emoji="✖", custom_id="persistent:decline")
     async def decline(self, interaction: Interaction, button:Button):
@@ -256,7 +250,6 @@ class EventView(View):
         if EventView.is_cancelled(origin_embed):
             return
         
-        # v:str = v.removeprefix("N/A") if "N/A" in v else v
         v:str = "" if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
@@ -268,8 +261,6 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("decline", origin_embed, interaction, clicked_by)
-            # await self.enable_all_buttons()
-            # button.disabled = True
     
     @button(label="Tentative", style=ButtonStyle.gray, emoji="➖", custom_id="persistent:tentative")
     async def tentative(self, interaction: Interaction, button:Button):
@@ -290,7 +281,6 @@ class EventView(View):
         if EventView.is_cancelled(origin_embed):
             return
         
-        # v:str = v.removeprefix("N/A") if "N/A" in v else v
         v:str = "" if "N/A" in v else v
         
         if does_embed_include_names(origin_embed):
@@ -302,8 +292,6 @@ class EventView(View):
             return
         else:
             await EventView.do_action_no_names("tentative", origin_embed, interaction, clicked_by)
-            # await self.enable_all_buttons()
-            # button.disabled = True
             
     @button(label="Cancel", style=ButtonStyle.gray, emoji="⚙", custom_id="persistent:cancel")
     async def cancel(self, interaction: Interaction, button:Button):
@@ -424,7 +412,6 @@ class EventView(View):
         new_value = action.value
         name = action.name
         inline = action.inline
-        # bug in line below ?
         new_value = int(new_value)-1 if votes.get(str(user.id)) else new_value
         if new_value <= 0:
             new_value = "0"
