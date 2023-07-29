@@ -233,12 +233,6 @@ async def on_command_error(ctx:Context, error:commands.CommandError):
     if isinstance(error, commands.CommandNotFound):
         await ctx.send(error, ephemeral=True)
         return
-    # if isinstance(error, commands.MissingPermissions):
-    #     await ctx.send(error,
-    #                    delete_after=S.DELETE_COMMAND_ERROR)
-    # if isinstance(error, commands.HybridCommandError):
-    #     await ctx.send("No permissions to do that.",
-    #                    delete_after=S.DELETE_COMMAND_ERROR)
 
 @CLIENT.event        
 async def on_message_error(ctx:Context, error):
