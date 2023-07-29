@@ -87,6 +87,18 @@ async def on_guild_join(guild:Guild):
     while not id or not prefix:
         id = await add_id(DATABASE, guild.id)
         prefix = await insert_db(DATABASE, guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
+        
+    default_channel = guild.system_channel
+
+    if default_channel:
+        # Replace this message with your own welcoming message
+        welcome_message = f"Hello, everyone! I am your new bot. Use commands by pre-typing `/` to open context menu."
+
+        try:
+            # Send the welcoming message to the default channel
+            await default_channel.send(welcome_message, delete_after=S.DELETE_HOUR)
+        except Exception as e:
+            pass
 
 @CLIENT.event
 async def on_member_join(member:Member):
@@ -134,10 +146,10 @@ async def send_guild_rules(member:Member, guild_joined:Guild):
         for idx, rule in guild_rules.items():
             result.append(f"{int(idx)+1}. " + rule)
         formated_output = "\n".join(result)
-        emb = Embed(title=f"[{guild_joined.name}] server's rules:",
+        emb = Embed(title=f"[{guild_joined.name}] server rules:",
                     description=formated_output,
                     color=Colour.red())
-        emb.set_footer(text="Being part of that server means you do respect these rules.")
+        emb.set_footer(text="Being a member of that server means you do respect these rules.")
         await member.send(embed=emb)
 
 @CLIENT.event    
