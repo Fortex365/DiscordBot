@@ -85,12 +85,14 @@ For next resuming the previous session after connecting again to server use:
 screen -r
 ```
 
-# Use bot with prefix `..` or via slash commands
+###### Please note that the audio part of bot might not work with some FFmpeg versions when running python 3.8+, to solve this issue, just run the application with python version 3.8 (3.8.10 to be precise, its insalled by default on Ubuntu Server 22.04 LTS) directly.
+
+# Use bot with prefix `.` or via slash commands
 :heavy_exclamation_mark::heavy_exclamation_mark::heavy_exclamation_mark:It's suggested to use in-app slash commands.:heavy_exclamation_mark::heavy_exclamation_mark::heavy_exclamation_mark:
 
 Example:
 ```
-..ping
+.ping
 >>> Pong! Latency is 1ms.
 ```
 or
@@ -122,7 +124,7 @@ You can modify this data to your own liking:
 - "DELETE_EMBED_HELP" - Command help message until its deletion. *Number: time in seconds.*
 - "CLIENT_ACTIVITY" - Activity bot is showing up as "Playing now". (Cannot be per server.) *List: containing several strings".*
 
-# Overview of commands:
+# Quick overview of commands:
 
 - rules, addrule, delrule, reset-rules
 
