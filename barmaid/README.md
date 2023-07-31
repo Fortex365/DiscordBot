@@ -62,7 +62,7 @@ DISCORD_BOT_TOKEN=your_token_goes_here
 Once again from [Discord Developer Portal](https://discord.com/developers/applications) create an invitation link to add your bot to discord servers. Give it `administrator` and select scope to `application.commands`. Copy generated invite link and fill accordingly to config.
 
 Open `config.json` and edit the following `BOT_URL_AUTH_HEADER`, `BOT_INVITE_URL`, `BOT_ID` as follows:
-```json
+```
 {
   "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id={client_id_here_without_bracers}",
   "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id={client_id_here_without_bracers}&permissions=8&scope=bot%20applications.commands",
