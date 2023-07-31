@@ -78,7 +78,7 @@ python3 barmaid.py
 For running script on Linux server I suggest you to use `screen` first to make the script running even after your session from server is abandoned. Then you can `Ctrl + A + D` to detach from session before you close [PuTTY](https://www.putty.org/).
 ```
 > screen
-> python barmaid.py
+> python3 barmaid.py
 ```
 For next resuming the previous session after connecting again to server use:
 ```
