@@ -64,9 +64,9 @@ Once again from [Discord Developer Portal](https://discord.com/developers/applic
 Open `config.json` and edit the following `BOT_URL_AUTH_HEADER`, `BOT_INVITE_URL`, `BOT_ID` as follows:
 ```json
 {
-  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id=821538075078557707",
-  "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands",
-  "BOT_ID": 821538075078557707
+  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id={client_id_here_without_bracers}",
+  "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id={client_id_here_without_bracers}&permissions=8&scope=bot%20applications.commands",
+  "BOT_ID": {client_id_here_without_bracers}
 }
 ```
 Mainly you just focus on the id itself.
