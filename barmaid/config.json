@@ -13,7 +13,7 @@
   },
   "DATABASE_FILE_NAME": "data/data.json",
   "GLOBAL_NAUGHTY_LIST": "data/user_records.json",
-  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id=1083758193374670939",
-  "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id=1083758193374670939&permissions=8&scope=bot%20applications.commands",
-  "BOT_ID": 1083758193374670939
+  "BOT_URL_AUTH_HEADER": "https://discord.com/oauth2/authorize?client_id={paste_your_client_id_here_and_remove_bracers}",
+  "BOT_INVITE_URL": "https://discord.com/api/oauth2/authorize?client_id={paste_your_client_id_here_and_remove_bracers}&permissions=8&scope=bot%20applications.commands",
+  "BOT_ID": {paste_your_client_id_here_and_remove_bracers}
 }

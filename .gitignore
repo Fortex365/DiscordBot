@@ -13,3 +13,4 @@ barmaid/_playground.py
 barmaid/_save.py
 __pycache__/
 barmaid/.env
+*.zip
