@@ -386,7 +386,7 @@ async def setup_notification(ctx:Context, emb:Embed, message_id:int, time:str):
     event_name = emb.fields[NAME_FIELD_POSITION].value
     original_time = datetime.strptime(iso_time_format, ISO_FORMAT)
     fifteen_mins_before = original_time - timedelta(minutes=15)
-    time_now = datetime.utcnow() + timedelta(hours=1) # CZ is UTC+1
+    time_now = datetime.utcnow() + timedelta(hours=2) # CZ
     to_wait = fifteen_mins_before - time_now
     if time_now > fifteen_mins_before:
         return
