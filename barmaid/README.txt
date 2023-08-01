@@ -1,3 +1,12 @@
+Aplikace je již hostována se stejným poskytnutým kódem jako v adresáři /src
+na cloudu ve službě AWS (na stroji Ubuntu 22.04 LTS) a není nutné si zprovozňovat bota svého.
+
+Již zprovozněný bot je přístupný následující pozvánkou:
+https://discord.com/api/oauth2/authorize?client_id=821538075078557707&permissions=8&scope=bot%20applications.commands
+
+Pozn.: Pro přidání bota na server je nutné být majitelem serveru, nebo mít dostatečná oprávnění spravovat discord server.
+
+
 ###########################################
 	Ubuntu Server 22.04 LTS
 ###########################################
