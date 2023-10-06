@@ -1,0 +1,6 @@
+0 5 */7 * * cd ~ && sh stop.sh
+2 5 */7 * * cd ~ && sh start.sh
+
+# Test
+# 30 1 * * * cd ~ && sh stop.sh
+# 32 1 * * * cd ~ && sh start.sh 

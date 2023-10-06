@@ -24,7 +24,7 @@ _yt_dl_options = {
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
-            'preferredquality': '192',
+            'preferredquality': '96',
         }],
     }
 _ytdl = yt_dlp.YoutubeDL(_yt_dl_options)
@@ -72,8 +72,10 @@ async def play(ctx:commands.Context, url:str):
     loop = asyncio.get_event_loop()
     try:
         data = await loop.run_in_executor(None, lambda: _ytdl.extract_info(url, download=False))
-    except yt_dlp.DownloadError as e:
-        await ctx.send(e, S.DELETE_COMMAND_ERROR)
+    except yt_dlp.DownloadError as download_error:
+        await ctx.send(f"Download error: {str(download_error)}", delete_after=S.DELETE_COMMAND_ERROR)
+    except Exception as e:
+        await ctx.send(f"An error occurred: {str(e)}", delete_after=S.DELETE_COMMAND_ERROR)
         return
     if not names:
         name = list(data["title"])
