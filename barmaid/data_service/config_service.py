@@ -45,6 +45,12 @@ DELETE_EPHEMERAL = msg_stngs['DELETE_EPHEMERAL']
 EMBED_HELP_COMMAND_COLOR = Colour.blue()
 
 """
+Voice
+"""
+voice_settings = settings['Voice']
+TIMEOUT = voice_settings['TIMEOUT']
+
+"""
 Filenames
 """
 DATABASE = settings["DATABASE_FILE_NAME"]

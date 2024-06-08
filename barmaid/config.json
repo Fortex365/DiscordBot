@@ -7,9 +7,12 @@
     "DELETE_EPHEMERAL": 15
   },
   "Activity": {
-    "CLIENT_ACTIVITY": ["Your Barmaid!",
-     "Serving drinks!",
-      "Local Pub."]
+    "CLIENT_ACTIVITY": ["Aesthra",
+     "je",
+      "lososem."]
+  },
+  "Voice": {
+    "TIMEOUT": 600
   },
   "DATABASE_FILE_NAME": "database/data.json",
   "GLOBAL_NAUGHTY_LIST": "database/user_records.json",

@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timedelta
 import uuid
 
-from data_service.database_service import insert_db, read_db, update_db
+from data_service.database_service import insert_new_key_by_guild_id, read_key_by_guild_id, update_key_by_guild_id
 import data_service.config_service as S
 from data_service.config_service import DATABASE, delete_command_user_invoke
 from event_service.EventView import EventView
@@ -348,7 +348,7 @@ async def echat(ctx:commands.Context, include_names:bool, title:str,
     lim = "limit" if lim else "no_limit"
     emb.set_footer(text=f"{hash} • {include_names} • {lim}")
     
-    ok = await insert_db(DATABASE, ctx.guild.id, hash, {"author": ctx.author.id})
+    ok = await insert_new_key_by_guild_id(DATABASE, ctx.guild.id, hash, {"author": ctx.author.id})
     if not ok:
         await ctx.send("Something has failed. Try again later.", 
                        delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)

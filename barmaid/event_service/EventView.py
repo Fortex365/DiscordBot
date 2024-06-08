@@ -2,7 +2,7 @@ from typing import Union
 from functools import lru_cache
 from discord import Embed, Member, User, Interaction, ButtonStyle
 from discord.ui import Button, View, button
-from data_service.database_service import insert_db, read_db, update_db
+from data_service.database_service import insert_new_key_by_guild_id, read_key_by_guild_id, update_key_by_guild_id
 import data_service.config_service as S
 from data_service.config_service import DATABASE
 from log_service.setup import setup_logging
@@ -75,7 +75,7 @@ class EventView(View):
         }[type]
         
         changed = await EventView.del_no_name_occurance(origin_embed, clicked_by, interaction.guild_id, type)
-        votes = await read_db(DATABASE, interaction.guild_id, embed_hash(origin_embed)) or {}
+        votes = await read_key_by_guild_id(DATABASE, interaction.guild_id, embed_hash(origin_embed)) or {}
         votes[str(clicked_by.id)] = type
         
         fields = changed.fields
@@ -87,13 +87,13 @@ class EventView(View):
             limit = int(new_name.split(" ")[2].replace(")", "")) if " " in new_name else 999999
             if new_value < limit:
                 new_value += 1
-                await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed), votes)
+                await update_key_by_guild_id(DATABASE, interaction.guild_id, embed_hash(origin_embed), votes)
             else:
                 await interaction.followup.send("I'm sorry, but the event exceeded its sign-ups.", ephemeral=True)
                 return
         else:
             new_value += 1
-            await update_db(DATABASE, interaction.guild_id, embed_hash(origin_embed), votes)
+            await update_key_by_guild_id(DATABASE, interaction.guild_id, embed_hash(origin_embed), votes)
         
         changed.set_field_at(position, name=new_name, value=str(new_value), inline=action.inline)
         await interaction.edit_original_response(embed=changed)
@@ -176,7 +176,7 @@ class EventView(View):
         origin = await interaction.original_response()
         origin_embed = origin.embeds[EventView.EMBED_CHATPOST_EVENT_POSITION]
         hash = embed_hash(origin_embed)
-        event = await read_db(DATABASE, interaction.guild_id, hash)
+        event = await read_key_by_guild_id(DATABASE, interaction.guild_id, hash)
         author_id = event["author"]
         
         if author_id == clicked_by.id:
@@ -215,7 +215,7 @@ class EventView(View):
     @staticmethod
     async def del_no_name_occurance(emb: Embed, usr: User, guild_id: int, type: str) -> Embed:
         """Deletes user's vote from the embed fields."""
-        votes = await read_db(DATABASE, guild_id, embed_hash(emb))
+        votes = await read_key_by_guild_id(DATABASE, guild_id, embed_hash(emb))
         if str(usr.id) not in votes:
             return emb
         
@@ -236,7 +236,7 @@ class EventView(View):
         new_value = max(new_value, 0)
         embed.set_field_at(position, name=field.name, value=str(new_value), inline=field.inline)
         votes.pop(str(user.id), None)
-        await update_db(DATABASE, guild_id, embed_hash(embed), votes)
+        await update_key_by_guild_id(DATABASE, guild_id, embed_hash(embed), votes)
         return embed
     
 if __name__ == "__main__":

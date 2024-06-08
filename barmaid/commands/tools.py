@@ -9,8 +9,8 @@ from discord.ext.commands import errors
 import data_service.config_service as S
 from data_service.config_service import RECORDS_DB
 from data_service.config_service import delete_command_user_invoke, database_fail
-from data_service.database_service import delete_from_db, id_lookup, insert_db, read_db 
-from data_service.database_service import update_db, add_id, read_id
+from data_service.database_service import delete_key_by_guild_id, guild_id_exists, insert_new_key_by_guild_id, read_key_by_guild_id 
+from data_service.database_service import update_key_by_guild_id, add_new_guild_id_with_empty_dataset, read_data_by_guild_id
 from log_service.setup import setup_logging
 
 from barmaid import CLIENT, DATABASE
@@ -213,7 +213,7 @@ async def prefix(ctx:commands.Context):
     """
     await ctx.defer(ephemeral=True)
     
-    prefix = await read_db(DATABASE, ctx.guild.id, "prefix")
+    prefix = await read_key_by_guild_id(DATABASE, ctx.guild.id, "prefix")
     if not prefix:
         await database_fail(ctx)
         return
@@ -259,7 +259,7 @@ async def prefixset(ctx:commands.Context, new_prefix:str):
             f"Allowed symbols are:\n > {SYMBOLS}", delete_after=S.DELETE_COMMAND_ERROR)
         return
 
-    changed = await update_db(DATABASE, ctx.guild.id, 'prefix', new_prefix)
+    changed = await update_key_by_guild_id(DATABASE, ctx.guild.id, 'prefix', new_prefix)
     # changed = await read_db(DATABASE, ctx.guild.id, 'prefix')
     if not changed:
         await database_fail(ctx)
@@ -365,16 +365,16 @@ async def add_to_naughty_list(member:int, guild:Guild, reason:str):
         guild (Guild): Guild banned from
         reason (str): Guild reason banned for
     """    
-    exists = await id_lookup(RECORDS_DB, member)
+    exists = await guild_id_exists(RECORDS_DB, member)
     if not exists:
-        await add_id(RECORDS_DB, member)
+        await add_new_guild_id_with_empty_dataset(RECORDS_DB, member)
         
     info_about_ban = {
         "guild_name": guild.name,
         "reason": reason
     }
-    if not await insert_db(RECORDS_DB, member, guild.id, info_about_ban):
-        await update_db(RECORDS_DB, member, guild.id, info_about_ban)
+    if not await insert_new_key_by_guild_id(RECORDS_DB, member, guild.id, info_about_ban):
+        await update_key_by_guild_id(RECORDS_DB, member, guild.id, info_about_ban)
       
 @commands.hybrid_command(with_app_command=True)
 @commands.guild_only()
@@ -471,13 +471,13 @@ async def records(ctx:commands.Context, member:Member):
                        delete_after=S.DELETE_COMMAND_ERROR, ephemeral=True)
         return
         
-    exists = await id_lookup(RECORDS_DB, member.id)
+    exists = await guild_id_exists(RECORDS_DB, member.id)
     if not exists:
         await ctx.send(f"Discord User: {member} has no records.",
                  delete_after=S.DELETE_COMMAND_INVOKE)
         return
     
-    data = await read_id(RECORDS_DB, member.id)
+    data = await read_data_by_guild_id(RECORDS_DB, member.id)
     data_items = data.items()
     message = f"User {member} has  `{len(data_items)}` records:\n>>> "
     for _, server_info in data_items:
@@ -680,7 +680,7 @@ async def rules(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    guild_rules:dict = await read_db(DATABASE, ctx.guild.id,
+    guild_rules:dict = await read_key_by_guild_id(DATABASE, ctx.guild.id,
                                      "guild-rules")
     if guild_rules:
         result:list = []      
@@ -709,14 +709,14 @@ async def addrule(ctx:commands.Context, *, new_rule:str):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
-    exists = await read_db(DATABASE, ctx.guild.id, "guild-rules")
+    exists = await read_key_by_guild_id(DATABASE, ctx.guild.id, "guild-rules")
     if not exists:
         rules:dict = {}
     else:
         rules = exists
     rules[f"{len(rules)}"] = new_rule
     
-    ok_update = await update_db(DATABASE, ctx.guild.id, "guild-rules", rules)
+    ok_update = await update_key_by_guild_id(DATABASE, ctx.guild.id, "guild-rules", rules)
     if ok_update:
         await ctx.send("New rule applied.")
         return
@@ -739,7 +739,7 @@ async def rules_reset(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
-    successful_remove = await delete_from_db(DATABASE, ctx.guild.id, "guild-rules")
+    successful_remove = await delete_key_by_guild_id(DATABASE, ctx.guild.id, "guild-rules")
     if successful_remove:
         await ctx.send("Rules no longer apply.", 
                         delete_after=S.DELETE_COMMAND_INVOKE)
@@ -781,7 +781,7 @@ async def delrule(ctx:commands.Context, index:int):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
        
-    guild_rules:dict = await read_db(DATABASE, ctx.guild.id, "guild-rules")
+    guild_rules:dict = await read_key_by_guild_id(DATABASE, ctx.guild.id, "guild-rules")
     if not guild_rules:
         await ctx.send("There are no rules therefore nothing to delete.")
         return
@@ -792,7 +792,7 @@ async def delrule(ctx:commands.Context, index:int):
         new_dict[str(idx)] = value
         idx += 1
 
-    ok_update = await update_db(DATABASE, ctx.guild.id, "guild-rules", new_dict)
+    ok_update = await update_key_by_guild_id(DATABASE, ctx.guild.id, "guild-rules", new_dict)
     if ok_update:
         await ctx.send(f"Rule {index} deleted.")
         return
@@ -885,7 +885,7 @@ async def show(ctx:commands.Context):
         return    
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE) 
-    response = await read_db(DATABASE,ctx.guild.id, "auto-role")
+    response = await read_key_by_guild_id(DATABASE,ctx.guild.id, "auto-role")
     if response:
         await ctx.send(f"Role to give when someone joins this server is: " \
             f"{ctx.guild.get_role(response).mention}",
@@ -938,11 +938,11 @@ async def set(ctx:commands.Context, role:Role):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
      
-    response = await insert_db(DATABASE, guid, "auto-role", role.id)
+    response = await insert_new_key_by_guild_id(DATABASE, guid, "auto-role", role.id)
     if response:
         await ctx.send(f"New role set.", delete_after=S.DELETE_COMMAND_INVOKE)
         return
-    response = await update_db(DATABASE, guid, "auto-role", role.id)
+    response = await update_key_by_guild_id(DATABASE, guid, "auto-role", role.id)
     if response:
         await ctx.send(f"Auto-role was updated.", delete_after=S.DELETE_COMMAND_INVOKE)
         return
@@ -964,7 +964,7 @@ async def remove(ctx:commands.Context):
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     guid = ctx.guild.id
     
-    success = await delete_from_db(DATABASE, guid, "auto-role")
+    success = await delete_key_by_guild_id(DATABASE, guid, "auto-role")
     if success:
         await ctx.send("Auto-role removed.", delete_after=S.DELETE_COMMAND_INVOKE)
         return
@@ -1014,7 +1014,7 @@ async def show(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    blacklist:list = await read_db(DATABASE, ctx.guild.id, "blacklist")
+    blacklist:list = await read_key_by_guild_id(DATABASE, ctx.guild.id, "blacklist")
 
     if not blacklist:
         await ctx.send(f"None are set.", delete_after=S.DELETE_COMMAND_ERROR)
@@ -1042,15 +1042,15 @@ async def add(ctx:commands.Context, entry:str):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    exists = await read_db(DATABASE, ctx.guild.id, "guild-rules")
+    exists = await read_key_by_guild_id(DATABASE, ctx.guild.id, "guild-rules")
     if not exists:
         blacklist:list = []
     else:
         blacklist = [exists]
 
-    is_ok = await insert_db(DATABASE, ctx.guild.id, "blacklist", blacklist)
+    is_ok = await insert_new_key_by_guild_id(DATABASE, ctx.guild.id, "blacklist", blacklist)
     if not is_ok:
-        is_updated = await update_db(DATABASE, ctx.guild.id, "blacklist", blacklist)
+        is_updated = await update_key_by_guild_id(DATABASE, ctx.guild.id, "blacklist", blacklist)
         if not is_updated:
             await database_fail(ctx)
             return
@@ -1074,7 +1074,7 @@ async def remove(ctx:commands.Context, entry:str):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
 
-    current_bl:list = await read_db(DATABASE,ctx.guild.id, "blacklist")
+    current_bl:list = await read_key_by_guild_id(DATABASE,ctx.guild.id, "blacklist")
     if not current_bl:
         await ctx.send(f"Looks like none were ever set.", 
                        delete_after=S.DELETE_COMMAND_ERROR)
@@ -1087,7 +1087,7 @@ async def remove(ctx:commands.Context, entry:str):
             except ValueError as e:
                 continue
                 
-    is_updated = await update_db(DATABASE, ctx.guild.id, "blacklist", current_bl)
+    is_updated = await update_key_by_guild_id(DATABASE, ctx.guild.id, "blacklist", current_bl)
     if not is_updated:
         await database_fail(ctx)
         return
@@ -1129,7 +1129,7 @@ async def show(ctx:commands.Context):
         return
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
-    mods_id:list = await read_db(DATABASE, ctx.guild.id, "mods_to_notify")
+    mods_id:list = await read_key_by_guild_id(DATABASE, ctx.guild.id, "mods_to_notify")
     if not mods_id:
         await ctx.send("None set yet!")
         return
@@ -1155,13 +1155,13 @@ async def add(ctx:commands.Context, member:Member):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
     
-    mods_now:list = await read_db(DATABASE, ctx.guild.id, "mods_to_notify")   
-    ok = await insert_db(DATABASE, ctx.guild.id, "mods_to_notify", [member.id])
+    mods_now:list = await read_key_by_guild_id(DATABASE, ctx.guild.id, "mods_to_notify")   
+    ok = await insert_new_key_by_guild_id(DATABASE, ctx.guild.id, "mods_to_notify", [member.id])
     if not ok:
         mods_now.append(member.id)
         # remove dups
         mods_now = _remove_list_duplicates(mods_now)
-        await update_db(DATABASE, ctx.guild.id, "mods_to_notify", mods_now)
+        await update_key_by_guild_id(DATABASE, ctx.guild.id, "mods_to_notify", mods_now)
     await ctx.send(f"{member} added!", delete_after=S.DELETE_COMMAND_INVOKE)
 
 @mods_to_notify.command()
@@ -1179,7 +1179,7 @@ async def reset(ctx:commands.Context):
     if not ctx.interaction:
         await delete_command_user_invoke(ctx, S.DELETE_COMMAND_INVOKE)
         
-    await delete_from_db(DATABASE, ctx.guild.id, "mods_to_notify")
+    await delete_key_by_guild_id(DATABASE, ctx.guild.id, "mods_to_notify")
     
     await ctx.send("Reset successful.", delete_after=S.DELETE_COMMAND_INVOKE)
 

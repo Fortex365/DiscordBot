@@ -13,10 +13,11 @@ from discord.ext.commands import Context
 
 import data_service.config_service as S
 from data_service.config_service import DATABASE, RECORDS_DB, CLIENT_ACTIVITY
-from data_service.database_service import id_lookup, insert_db, read_db, add_id, read_id
+from data_service.database_service import guild_id_exists, insert_new_key_by_guild_id, read_key_by_guild_id, add_new_guild_id_with_empty_dataset, read_data_by_guild_id
 from event_service.EventView import EventView
 from log_service.setup import setup_logging
 from re import search
+from audio_service.audio import check_inactivity
 #endregion 
 
 #region Default App Settings
@@ -29,7 +30,7 @@ INTENTS.message_content, INTENTS.reactions = True, True
 # Listed modules to be loaded into client
 EXTENSIONS = [
     # "commands.tools",
-    # "event_service.event",
+    "event_service.event",
     "audio_service.audio",
 ]
 
@@ -47,9 +48,13 @@ async def get_prefix(client: commands.Bot, message: Message):
     if not message.guild:
         return commands.when_mentioned_or(S.DEFAULT_SERVER_PREFIX)(client, message)
     
-    prefix = await read_db(DATABASE, message.guild.id, 'prefix')
+    exists = await guild_id_exists(DATABASE, message.guild.id)
+    if not exists:
+        await add_new_guild_id_with_empty_dataset(DATABASE, message.guild.id)
+    
+    prefix = await read_key_by_guild_id(DATABASE, message.guild.id, 'prefix')
     if not prefix:
-        is_okay = await insert_db(DATABASE, message.guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
+        is_okay = await insert_new_key_by_guild_id(DATABASE, message.guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX)
         if not is_okay:
             return
         prefix = S.DEFAULT_SERVER_PREFIX
@@ -70,7 +75,8 @@ async def on_ready():
     """    
     await CLIENT.change_presence(status=Status.dnd, activity=Game(name="Booting..", start=datetime.now()))
     print("Online.")
-    await asyncio.sleep(5)
+    await asyncio.sleep(2)
+    check_inactivity.start()
     change_status.start()
 
 @CLIENT.event
@@ -80,7 +86,7 @@ async def on_guild_join(guild: Guild):
     Args:
         guild (Guild): Guild bot joined in
     """
-    while not await add_id(DATABASE, guild.id) or not await insert_db(DATABASE, guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX):
+    while not await add_new_guild_id_with_empty_dataset(DATABASE, guild.id) or not await insert_new_key_by_guild_id(DATABASE, guild.id, 'prefix', S.DEFAULT_SERVER_PREFIX):
         pass
         
     default_channel = guild.system_channel
@@ -99,7 +105,7 @@ async def on_member_join(member: Member):
     Args:
         member (Member): Member who joined server
     """
-    role_id = await read_db(DATABASE, member.guild.id, "auto-role")
+    role_id = await read_key_by_guild_id(DATABASE, member.guild.id, "auto-role")
     if role_id:
         role = member.guild.get_role(role_id)
         if role:
@@ -162,25 +168,24 @@ async def setup_hook():
 #endregion
 
 #region Tasks
-@tasks.loop(seconds=10)
+@tasks.loop(seconds=5)
 async def change_status():
     status = next(CLIENT_ACTIVITY)
     await CLIENT.change_presence(activity=Game(status))
-
 #endregion
 
 #region Helper Functions
 async def notify_mods_of_records(member: Member, guild: Guild):
-    mods_id = await read_db(DATABASE, guild.id, "mods_to_notify")
+    mods_id = await read_key_by_guild_id(DATABASE, guild.id, "mods_to_notify")
     mods = [guild.get_member(id) for id in mods_id if guild.get_member(id)]
-    naughty_records = await read_id(RECORDS_DB, member.id)
+    naughty_records = await read_data_by_guild_id(RECORDS_DB, member.id)
     
     for mod in mods:
         await mod.send(f"{member} joined {guild.name} with `{len(naughty_records)}` naughty records.\nUse `/records @mention` on your server to see more information.")
 
 async def send_guild_rules(member: Member, guild: Guild):
     """For newly joined member on a server, bot sends this user server specified rules."""
-    guild_rules = await read_db(DATABASE, guild.id, "guild-rules")
+    guild_rules = await read_key_by_guild_id(DATABASE, guild.id, "guild-rules")
     if guild_rules:
         rules = "\n".join([f"{idx + 1}. {rule}" for idx, rule in enumerate(guild_rules.values())])
         embed = Embed(title=f"[{guild.name}] server rules:", description=rules, color=Colour.red())
@@ -192,7 +197,7 @@ async def check_blacklist(guild: Guild, msg: Message):
     if await is_blacklist_exception(msg):
         return
     
-    blacklist = await read_db(DATABASE, guild.id, "blacklist")
+    blacklist = await read_key_by_guild_id(DATABASE, guild.id, "blacklist")
     if not blacklist:
         return
     
@@ -203,7 +208,7 @@ async def check_blacklist(guild: Guild, msg: Message):
 
 async def check_records(member: Member) -> bool:
     """Checks whether or not the member has any records."""
-    return bool(await id_lookup(RECORDS_DB, member.id))
+    return bool(await guild_id_exists(RECORDS_DB, member.id))
 
 async def is_blacklist_exception(msg: Message) -> bool:
     return search("filter remove", msg.content[:13].lower()) is not None

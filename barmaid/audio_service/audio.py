@@ -5,6 +5,8 @@ import random
 import yt_dlp
 from log_service.setup import setup_logging
 from discord.ext import commands, tasks
+from datetime import datetime
+from data_service.config_service import TIMEOUT as TIMEOUT_SECONDS
 
 log = setup_logging()
 CLIENT: commands.Bot = None
@@ -27,7 +29,6 @@ _ffmpeg_options = {
     "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 }
 _JUKEBOX_ERROR = "Sorry, something unexpected went wrong with jukebox. Please try again later."
-TIMEOUT_SECONDS = 600
 _last_active_time = {}
 
 
@@ -109,7 +110,7 @@ async def play_next(ctx):
         voice_client.play(player, after=after_callback)
         voice_client.player = player
         voice_client.now_playing = data.get("title", "Unknown Title")
-        _last_active_time[ctx.guild.id] = asyncio.get_event_loop().time()
+        _last_active_time[ctx.guild.id] = datetime.now()
         log.info(f"Playing success: {voice_client.now_playing}, at {ctx.guild.name}")
 
     except Exception as e:
@@ -131,7 +132,7 @@ async def play_music(ctx, url):
 
     song_name = song_info["title"]
     _list_names.setdefault(ctx.guild.id, []).append(song_name)
-    _last_active_time[ctx.guild.id] = asyncio.get_event_loop().time()
+    _last_active_time[ctx.guild.id] = datetime.now()
 
     if not voice_client.is_playing():
         await play_next(ctx)
@@ -170,7 +171,7 @@ async def play_playlist(ctx: commands.Context, playlist_url: str, shuffle=False)
     for url in urls:
         await add_to_queue(ctx, url)
 
-    _last_active_time[ctx.guild.id] = asyncio.get_event_loop().time()
+    _last_active_time[ctx.guild.id] = datetime.now()
     if not voice_client.is_playing():
         await play_next(ctx)
         await ctx.interaction.followup.send("Playlist started!", ephemeral=True, delete_after=S.DELETE_EPHEMERAL)
@@ -208,7 +209,7 @@ async def resume(ctx: commands.Context):
     await ctx.defer(ephemeral=True)
     try:
         _voice_clients[ctx.guild.id].resume()
-        _last_active_time[ctx.guild.id] = asyncio.get_event_loop().time()
+        _last_active_time[ctx.guild.id] = datetime.now()
         await ctx.send("Jukebox resumed!", delete_after=S.DELETE_EPHEMERAL)
     except Exception:
         await ctx.send(_JUKEBOX_ERROR, ephemeral=True, delete_after=S.DELETE_EPHEMERAL)
@@ -221,7 +222,7 @@ async def next(ctx: commands.Context):
     voice_client = _voice_clients.get(ctx.guild.id)
     if voice_client and voice_client.is_playing():
         voice_client.stop()
-        _last_active_time[ctx.guild.id] = asyncio.get_event_loop().time()
+        _last_active_time[ctx.guild.id] = datetime.now()
         await play_next(ctx)
         await ctx.send("Song skipped!", delete_after=S.DELETE_EPHEMERAL)
     else:
@@ -291,12 +292,11 @@ async def shuffle_queue(ctx: commands.Context):
     _list_names[ctx.guild.id] = names
     await ctx.send("Queue shuffled!", delete_after=S.DELETE_EPHEMERAL)
 
-
-@tasks.loop(minutes=1)
+@tasks.loop(seconds=10)
 async def check_inactivity():
-    current_time = asyncio.get_event_loop().time()
+    current_time = datetime.now()
     for guild_id, last_active in list(_last_active_time.items()):
-        if current_time - last_active > TIMEOUT_SECONDS:
+        if (current_time - last_active).total_seconds() > TIMEOUT_SECONDS:
             voice_client = _voice_clients.get(guild_id)
             if voice_client and not voice_client.is_playing():
                 await voice_client.disconnect()
@@ -305,14 +305,15 @@ async def check_inactivity():
                 log.info(f"Disconnected due to inactivity: {guild_id}")
 
 
-@check_inactivity.before_loop
-async def before_check_inactivity():
-    await CLIENT.wait_until_ready()
 
+# @check_inactivity.before_loop
+# async def before_check_inactivity():
+#     await CLIENT.wait_until_ready()
+    
 
 async def setup(bot: commands.Bot):
     global CLIENT
-
+    
     bot.add_command(play)
     bot.add_command(play_playlist)
     bot.add_command(stop)
@@ -322,9 +323,8 @@ async def setup(bot: commands.Bot):
     bot.add_command(queue)
     bot.add_command(next)
     bot.add_command(shazam)
-    bot.add_command(shuffle_queue)  # Add shuffle_queue command
+    bot.add_command(shuffle_queue)
     CLIENT = bot
-    check_inactivity.start()
 
 
 if __name__ == "__main__":
