@@ -20,3 +20,4 @@ odevzdani/
 barmaid/server_deploy/ffmpeg.exe
 barmaid/log_service/barmaid.log
 *.log
+barmaid/audio_service/audio_backup.py
