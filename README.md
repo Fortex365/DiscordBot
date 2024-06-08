@@ -1,3 +1,3 @@
-In the `demo/` there is a demo which was ran on replit.com
+In the `kidiplom/` there is a tex project and pdf of the thesis
 
 In the `barmaid/` there is the project in the current development
