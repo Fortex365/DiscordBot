@@ -3,7 +3,7 @@ import json
 import aiofiles
 from collections import OrderedDict
 from functools import wraps
-from log.error_log import setup_logging
+from log_service.setup import setup_logging
 
 log = setup_logging()
 

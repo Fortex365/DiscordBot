@@ -6,12 +6,12 @@ from discord import Interaction, SelectOption, File, Button
 from discord.ext import commands
 from discord.ext.commands import errors
 
-import data.configuration as S
-from data.configuration import RECORDS_DB
-from data.configuration import delete_command_user_invoke, database_fail
-from data.jsonified_database import delete_from_db, id_lookup, insert_db, read_db 
-from data.jsonified_database import update_db, add_id, read_id
-from log.error_log import setup_logging
+import data_service.config_service as S
+from data_service.config_service import RECORDS_DB
+from data_service.config_service import delete_command_user_invoke, database_fail
+from data_service.database_service import delete_from_db, id_lookup, insert_db, read_db 
+from data_service.database_service import update_db, add_id, read_id
+from log_service.setup import setup_logging
 
 from barmaid import CLIENT, DATABASE
 log = setup_logging()

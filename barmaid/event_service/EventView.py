@@ -1,9 +1,9 @@
 from typing import Union
 from functools import lru_cache
-from data.jsonified_database import insert_db, read_db, update_db
+from data_service.database_service import insert_db, read_db, update_db
 
-import data.configuration as S
-from data.configuration import DATABASE
+import data_service.config_service as S
+from data_service.config_service import DATABASE
 
 from discord import Embed, Member
 from discord import User

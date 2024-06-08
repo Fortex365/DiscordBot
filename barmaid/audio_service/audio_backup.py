@@ -1,11 +1,10 @@
-import data.configuration as S
+import data_service.config_service as S
 import discord
 import asyncio
 import requests
 import random
-# import youtube_dl
 import yt_dlp
-from log.error_log import setup_logging
+from log_service.setup import setup_logging
 from discord.ext import commands
 
 """
@@ -71,7 +70,7 @@ async def play(ctx:commands.Context, url:str):
     names = _list_names.get(ctx.guild.id)
     loop = asyncio.get_event_loop()
     try:
-        data = await loop.run_in_executor(None, lambda: _ytdl.extract_info(url, download=False))
+        data = await loop.run_in_executor(None, lambda: _ytdl.extract_info(url, download=False, process=False))
     except yt_dlp.DownloadError as download_error:
         await ctx.send(f"Download error: {str(download_error)}", delete_after=S.DELETE_COMMAND_ERROR)
     except Exception as e:
@@ -154,7 +153,7 @@ async def play_playlist(ctx:commands.Context, playlist_url: str, shuffle=False):
     names = _list_names.get(ctx.guild.id)
     loop = asyncio.get_event_loop()
     data = await loop.run_in_executor(None, lambda:
-            _ytdl.extract_info(playlist_url, download=False))
+            _ytdl.extract_info(playlist_url, download=False, process=False))
     
     urls = []
     data_names = []    

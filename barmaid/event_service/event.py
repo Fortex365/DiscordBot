@@ -2,11 +2,11 @@ import asyncio
 from datetime import datetime, timedelta
 import uuid
 
-from data.jsonified_database import insert_db, read_db, update_db
-import data.configuration as S
-from data.configuration import DATABASE, delete_command_user_invoke
-from events.EventView import EventView
-from events.scheduled_events import ScheduledEvents
+from data_service.database_service import insert_db, read_db, update_db
+import data_service.config_service as S
+from data_service.config_service import DATABASE, delete_command_user_invoke
+from event_service.EventView import EventView
+from event_service.scheduled_events import ScheduledEvents
 
 from discord import Embed, Member, channel, Invite
 from discord import Role, Guild, VoiceChannel, Reaction, User, Object
@@ -15,8 +15,8 @@ from discord.message import Message
 
 from discord.ext import commands
 from discord.ext.commands import Context
-from log.error_log import setup_logging
-from events.EventView import embed_hash
+from log_service.setup import setup_logging
+from event_service.EventView import embed_hash
 
 """
 Client instance loaded after barmaid.load_extensions() passes its instance into
