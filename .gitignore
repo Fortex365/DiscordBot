@@ -18,3 +18,5 @@ odevzdani/
 odevzdani/
 *.pptx
 barmaid/server_deploy/ffmpeg.exe
+barmaid/log_service/barmaid.log
+*.log
